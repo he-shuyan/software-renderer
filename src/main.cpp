@@ -4,8 +4,8 @@
 
 int main() {
 	//1.1 建立空画布
-	const int width = 8;//画布列数
-	const int height = 4;//画布行数
+	const int width = 64;//画布列数
+	const int height = 32;//画布行数
 /*
 - 建一块连续内存。
 - 第一个参数是元素个数：width * height * 3
@@ -40,10 +40,11 @@ auto 让编译器自己推断这个变量是什么类型
 		return canvas[(static_cast<std::size_t>(y) * width + x) * 3 + channel];//channel 是 0、1、2，分别代表 R、G、B
 	};
 
+	/*脚手架：为了验证前边是否正确
 	setPixel(0, 0, 255, 0, 0);
 	std::cout << "(0,0) 现在是：" << getPixel(0, 0, 0) << ","
 		<< getPixel(0, 0, 1) << ","
-		<< getPixel(0, 0, 2) << std::endl;
+		<< getPixel(0, 0, 2) << std::endl;*/
 
 
 
@@ -57,19 +58,32 @@ auto 让编译器自己推断这个变量是什么类型
 			setPixel(x, y, r, g, b);
 		}
 	}
+	/*
 	std::cout << "(0,0) 填完之后：" << getPixel(0, 0, 0) << ","
 		<< getPixel(0, 0, 1) << ","
 		<< getPixel(0, 0, 2) << std::endl;
+	*/
 
 
 
 
 	//1.4 把整块画布打印出来
+	/*数字打印用于验证
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
 			std::cout << "(" << getPixel(x, y, 0) << ","
 				<< getPixel(x, y, 1) << ","
 				<< getPixel(x, y, 2) << ") ";
+		}
+		std::cout << std::endl;
+	}*/
+	const char* ramp = " .:-=+*#%@";
+	//用符号表示亮度：第一个字符是空格（最暗的像素显示成空白），最后是 @（最亮的）。中间那串符号是美术上的惯例，密度递增，看起来就像渐变的灰度。
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			const int brightness = (getPixel(x, y, 0) + getPixel(x, y, 1) + getPixel(x, y, 2)) / 3;//把 R、G、B 加起来除以 3，得到一个 0~255 的"亮度"。
+			const int level = brightness * 9 / 255;
+		std:: cout << ramp[level];
 		}
 		std::cout << std::endl;
 	}
