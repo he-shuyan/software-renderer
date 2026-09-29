@@ -1,6 +1,77 @@
+#include <cstdint>//引入 uint8_t 这类"固定宽度整数"的定义,写死颜色分量字节数为1
 #include <iostream>
+#include <vector>
 
 int main() {
-    std::cout << "hello renderer" << std::endl;
-    return 0;
+	//1.1 建立空画布
+	const int width = 8;//画布列数
+	const int height = 4;//画布行数
+/*
+- 建一块连续内存。
+- 第一个参数是元素个数：width * height * 3
+- 第二个参数 0 表示每个字节都初始化为 0（黑色）
+- std::uint8_t：意思是：一个只能表示 0 到 255 的整数类型，通常占 1 个字节。
+u：unsigned，无符号
+int：integer，整数
+8：8 位
+_t：type，表示这是一个类型名
+*/
+	std::vector<std::uint8_t>canvas(static_cast<std::size_t>(width) * height * 3, 0);//static_cast<std::size_t>将int类型改为size_t类型
+	std::cout << "画布字节总数" << canvas.size() << "，应为" << width * height * 3 << std::endl;
+
+	
+	
+    //1.2 学会往画布上写颜色、读回来
+//就地定义一个函数
+/*
+auto 让编译器自己推断这个变量是什么类型
+[&] 是"捕获列表"，意思是"我要用外面的 canvas 和 width，用引用的方式借用"。不写 [&]，函数里面就看不到这两个变量
+定义完就能像普通函数一样调用：setPixel(0, 0, 255, 0, 0)
+*/
+	auto setPixel = [&](int x, int y, std::uint8_t r, std::uint8_t g, std::uint8_t b) {
+		const std::size_t index = (static_cast<std::size_t>(y) * width + x) * 3;
+		canvas[index] = r;
+		canvas[index + 1] = g;
+		canvas[index + 2] = b;
+		/*y * width + x：把二维坐标压成一个一维序号。第 y 行前面已经放满了 y 行，每行 width 个，所以先跳过 y * width 个；再加上这一行里的偏移 x
+* 3：因为每个像素占 3 个字节，序号要乘 3 才是字节下标*/
+	};
+	auto getPixel = [&](int x, int y, int channel)->int {//-> int：显式指定返回类型是 int
+		return canvas[(static_cast<std::size_t>(y) * width + x) * 3 + channel];//channel 是 0、1、2，分别代表 R、G、B
+	};
+
+	setPixel(0, 0, 255, 0, 0);
+	std::cout << "(0,0) 现在是：" << getPixel(0, 0, 0) << ","
+		<< getPixel(0, 0, 1) << ","
+		<< getPixel(0, 0, 2) << std::endl;
+
+
+
+
+	//1.3 逐行扫描，把整块画布填满
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			const auto r = static_cast<std::uint8_t>(255 * x / (width - 1));//随列变化，红色亮度从0到255
+			const auto g = static_cast<std::uint8_t>(255 * y / (height - 1));//随行变化，绿色亮度从0到255
+			const auto b = static_cast<std::uint8_t>(128);//蓝色固定半亮，b取值不同，所要效果不一样
+			setPixel(x, y, r, g, b);
+		}
+	}
+	std::cout << "(0,0) 填完之后：" << getPixel(0, 0, 0) << ","
+		<< getPixel(0, 0, 1) << ","
+		<< getPixel(0, 0, 2) << std::endl;
+
+
+
+
+	//1.4 把整块画布打印出来
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			std::cout << "(" << getPixel(x, y, 0) << ","
+				<< getPixel(x, y, 1) << ","
+				<< getPixel(x, y, 2) << ") ";
+		}
+		std::cout << std::endl;
+	}
+	return 0;
 }
