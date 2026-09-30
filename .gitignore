@@ -4,3 +4,10 @@ out/
 .vscode/
 *.tga
 *.ppm
+# 编译产物
+build/
+
+# 程序生成的图（每次运行都会重新生成，不需要进仓库）
+out.bmp
+*.bmp
+
