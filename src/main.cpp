@@ -1,11 +1,14 @@
 #include <cstdint>//引入 uint8_t 这类"固定宽度整数"的定义,写死颜色分量字节数为1
 #include <iostream>
-#include <vector>
+//#include <vector>
 
+#include "image.h"
 int main() {
 	//1.1 建立空画布
 	const int width = 64;//画布列数
 	const int height = 32;//画布行数
+
+	Image image (width, height);
 /*
 - 建一块连续内存。
 - 第一个参数是元素个数：width * height * 3
@@ -16,8 +19,8 @@ int：integer，整数
 8：8 位
 _t：type，表示这是一个类型名
 */
-	std::vector<std::uint8_t>canvas(static_cast<std::size_t>(width) * height * 3, 0);//static_cast<std::size_t>将int类型改为size_t类型
-	std::cout << "画布字节总数" << canvas.size() << "，应为" << width * height * 3 << std::endl;
+//	std::vector<std::uint8_t>canvas(static_cast<std::size_t>(width) * height * 3, 0);//static_cast<std::size_t>将int类型改为size_t类型
+//	std::cout << "画布字节总数" << canvas.size() << "，应为" << width * height * 3 << std::endl;
 
 	
 	
@@ -28,17 +31,18 @@ auto 让编译器自己推断这个变量是什么类型
 [&] 是"捕获列表"，意思是"我要用外面的 canvas 和 width，用引用的方式借用"。不写 [&]，函数里面就看不到这两个变量
 定义完就能像普通函数一样调用：setPixel(0, 0, 255, 0, 0)
 */
-	auto setPixel = [&](int x, int y, std::uint8_t r, std::uint8_t g, std::uint8_t b) {
+/*	auto setPixel = [&](int x, int y, std::uint8_t r, std::uint8_t g, std::uint8_t b) {
 		const std::size_t index = (static_cast<std::size_t>(y) * width + x) * 3;
 		canvas[index] = r;
 		canvas[index + 1] = g;
 		canvas[index + 2] = b;
-		/*y * width + x：把二维坐标压成一个一维序号。第 y 行前面已经放满了 y 行，每行 width 个，所以先跳过 y * width 个；再加上这一行里的偏移 x
-* 3：因为每个像素占 3 个字节，序号要乘 3 才是字节下标*/
+		//y * width + x：把二维坐标压成一个一维序号。第 y 行前面已经放满了 y 行，每行 width 个，所以先跳过 y * width 个；再加上这一行里的偏移 x
+* 3：因为每个像素占 3 个字节，序号要乘 3 才是字节下标
 	};
 	auto getPixel = [&](int x, int y, int channel)->int {//-> int：显式指定返回类型是 int
 		return canvas[(static_cast<std::size_t>(y) * width + x) * 3 + channel];//channel 是 0、1、2，分别代表 R、G、B
 	};
+*/
 
 	/*脚手架：为了验证前边是否正确
 	setPixel(0, 0, 255, 0, 0);
@@ -55,7 +59,7 @@ auto 让编译器自己推断这个变量是什么类型
 			const auto r = static_cast<std::uint8_t>(255 * x / (width - 1));//随列变化，红色亮度从0到255
 			const auto g = static_cast<std::uint8_t>(255 * y / (height - 1));//随行变化，绿色亮度从0到255
 			const auto b = static_cast<std::uint8_t>(128);//蓝色固定半亮，b取值不同，所要效果不一样
-			setPixel(x, y, r, g, b);
+			image.setPixel(x, y, r, g, b);
 		}
 	}
 	/*
@@ -81,7 +85,7 @@ auto 让编译器自己推断这个变量是什么类型
 	//用符号表示亮度：第一个字符是空格（最暗的像素显示成空白），最后是 @（最亮的）。中间那串符号是美术上的惯例，密度递增，看起来就像渐变的灰度。
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
-			const int brightness = (getPixel(x, y, 0) + getPixel(x, y, 1) + getPixel(x, y, 2)) / 3;//把 R、G、B 加起来除以 3，得到一个 0~255 的"亮度"。
+			const int brightness = (image.getPixel(x, y, 0) + image.getPixel(x, y, 1) + image.getPixel(x, y, 2)) / 3;//把 R、G、B 加起来除以 3，得到一个 0~255 的"亮度"。
 			const int level = brightness * 9 / 255;
 		std:: cout << ramp[level];
 		}
