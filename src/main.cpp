@@ -91,5 +91,11 @@ auto 让编译器自己推断这个变量是什么类型
 		}
 		std::cout << std::endl;
 	}
+	if (image.saveBMP("out.bmp")) {
+		std::cout << "已写出 out.bmp\n";
+	}
+	else {
+		std::cout << "写文件失败\n";
+	}
 	return 0;
 }
