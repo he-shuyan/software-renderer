@@ -37,7 +37,7 @@ static void writeU32(std::ofstream& out, uint32_t v) {
 Image::Image(int width,int height)
 	:width_(width),
 	height_(height),
-	data_(static_cast<std::uint8_t>(width)*height*3,0){}
+	data_(static_cast<std::size_t>(width)*height*3,0){}
 
 
 //把二维坐标 + 通道号转成一维数组下标。

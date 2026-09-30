@@ -5,10 +5,13 @@
 #include "image.h"
 int main() {
 	//1.1 建立空画布
-	const int width = 64;//画布列数
-	const int height = 32;//画布行数
+	const int width = 650;//画布列数
+	const int height = 400;//画布行数
+
+	const int previewStep = 10;
 
 	Image image (width, height);
+
 /*
 - 建一块连续内存。
 - 第一个参数是元素个数：width * height * 3
@@ -83,8 +86,8 @@ auto 让编译器自己推断这个变量是什么类型
 	}*/
 	const char* ramp = " .:-=+*#%@";
 	//用符号表示亮度：第一个字符是空格（最暗的像素显示成空白），最后是 @（最亮的）。中间那串符号是美术上的惯例，密度递增，看起来就像渐变的灰度。
-	for (int y = 0; y < height; ++y) {
-		for (int x = 0; x < width; ++x) {
+	for (int y = 0; y < height; y+=previewStep) {
+		for (int x = 0; x < width; x+=previewStep) {
 			const int brightness = (image.getPixel(x, y, 0) + image.getPixel(x, y, 1) + image.getPixel(x, y, 2)) / 3;//把 R、G、B 加起来除以 3，得到一个 0~255 的"亮度"。
 			const int level = brightness * 9 / 255;
 		std:: cout << ramp[level];
