@@ -2,8 +2,25 @@
 #include <iostream>
 //#include <vector>
 
+#include "Vec2.h"
 #include "image.h"
 int main() {
+
+	//测试Vec2.h
+	const Vec2 a(3.0, 4.0);
+	const Vec2 b(1.0, 2.0);
+	std::cout << "a = (" << a.x << ", " << a.y << ")\n";
+	std::cout << "b = (" << b.x << ", " << b.y << ")\n";
+	std::cout << "a + b = (" << (a + b).x << ", " << (a + b).y << ")\n";
+	std::cout << "a - b = (" << (a - b).x << ", " << (a - b).y << ")\n";
+	std::cout << "a * 2 = (" << (a * 2).x << ", " << (a * 2).y << ")\n";
+	std::cout << "a . b = " << a.dot(b) << "\n";
+	std::cout << "|a|   = " << a.length() << "\n";
+
+	const Vec2 n = a.normalized();
+	std::cout << "a 的单位向量 = (" << n.x << ", " << n.y << ")\n";
+	std::cout << "|单位向量| = " << n.length() << "\n";
+
 	//1.1 建立空画布
 	const int width = 650;//画布列数
 	const int height = 400;//画布行数
