@@ -7,4 +7,5 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(app
     src/main.cpp
     src/image.cpp
+    src/line.cpp
 )

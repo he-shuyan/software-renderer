@@ -4,9 +4,12 @@
 
 #include "Vec2.h"
 #include "image.h"
+#include "line.h"
+
 int main() {
 
-	//测试Vec2.h
+	//测试Vec2.h，可删除
+/*
 	const Vec2 a(3.0, 4.0);
 	const Vec2 b(1.0, 2.0);
 	std::cout << "a = (" << a.x << ", " << a.y << ")\n";
@@ -20,7 +23,7 @@ int main() {
 	const Vec2 n = a.normalized();
 	std::cout << "a 的单位向量 = (" << n.x << ", " << n.y << ")\n";
 	std::cout << "|单位向量| = " << n.length() << "\n";
-
+*/
 	//1.1 建立空画布
 	const int width = 650;//画布列数
 	const int height = 400;//画布行数
@@ -28,6 +31,8 @@ int main() {
 	const int previewStep = 10;
 
 	Image image (width, height);
+
+	
 
 /*
 - 建一块连续内存。
@@ -74,7 +79,7 @@ auto 让编译器自己推断这个变量是什么类型
 
 
 	//1.3 逐行扫描，把整块画布填满
-	for (int y = 0; y < height; ++y) {
+/*  for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
 			const auto r = static_cast<std::uint8_t>(255 * x / (width - 1));//随列变化，红色亮度从0到255
 			const auto g = static_cast<std::uint8_t>(255 * y / (height - 1));//随行变化，绿色亮度从0到255
@@ -82,14 +87,22 @@ auto 让编译器自己推断这个变量是什么类型
 			image.setPixel(x, y, r, g, b);
 		}
 	}
-	/*
+	
 	std::cout << "(0,0) 填完之后：" << getPixel(0, 0, 0) << ","
 		<< getPixel(0, 0, 1) << ","
 		<< getPixel(0, 0, 2) << std::endl;
 	*/
+	// 背景：整块填成深灰蓝
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			image.setPixel(x, y, 20, 20, 30);
+		}
+	}
 
-
-
+	drawLine(image, Vec2(50.0, 50.0), Vec2(600.0, 50.0), 255, 80, 80);
+	drawLine(image, Vec2(50.0, 60.0), Vec2(600.0, 360.0), 80, 255, 120);
+	drawLine(image, Vec2(320.0, 30.0), Vec2(320.0, 370.0), 120, 160, 255);
+	drawLine(image, Vec2(100.0, 20.0), Vec2(140.0, 380.0), 255, 230, 120);
 
 	//1.4 把整块画布打印出来
 	/*数字打印用于验证
