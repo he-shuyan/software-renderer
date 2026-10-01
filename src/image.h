@@ -15,7 +15,7 @@ public:
 	Image(int width, int height);//无返回值的构造函数
 
 	int width()const { return width_; };
-	int height()const { return height_; };
+	int heigth()const { return height_; };
 
 	void setPixel(int x, int y, std::uint8_t r, std::uint8_t g, std::uint8_t b);
 	int getPixel(int x, int y, int chamel)const;
