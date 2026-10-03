@@ -2,6 +2,7 @@
 
 #include <cstdlib>//abs在其中，cmath的只管double和float
 #include <cmath>
+#include <algorithm>
 
 //DDA画线
 void drawLineDDA(Image& image, const Vec2& from, const Vec2& to,
@@ -66,7 +67,7 @@ void drawLineBresenham(Image& image, const Vec2& from, const Vec2& to, const Col
     int x0 = static_cast<int>(std::lround(from.x));
     int y0 = static_cast<int>(std::lround(from.y));
     const int x1 = static_cast<int>(std::lround(to.x));
-    const int y1 = static_cast<int>(std::lround(to.x));
+    const int y1 = static_cast<int>(std::lround(to.y));
 
     //计算增量
     const int dx = std::abs(x1 - x0);
@@ -101,7 +102,7 @@ void drawLineBresenham(Image& image, const Vec2& from, const Vec2& to, const Col
             err -= dy;
             x0 += sx;
         }
-        else if (e2 < dx) {
+        if (e2 < dx) {
             err += dx;
             y0 += sy;
         }

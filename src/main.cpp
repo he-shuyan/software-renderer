@@ -174,10 +174,10 @@ auto 让编译器自己推断这个变量是什么类型
 		}
 	}
 
-	drawLineDDA(image, Vec2(50.0, 50.0), Vec2(600.0, 50.0), Color(255, 80, 80), Color(0, 255, 80));
-	drawLineDDA(image, Vec2(50.0, 60.0), Vec2(600.0, 360.0), Color(80, 255, 120), Color(120, 255, 80));
-	drawLineDDA(image, Vec2(320.0, 30.0), Vec2(320.0, 370.0), Color(120, 160, 255), Color(255, 230, 80));
-	drawLineDDA(image, Vec2(100.0, 20.0), Vec2(140.0, 380.0), Color(255, 230, 120), Color(160, 120, 80));
+	drawLineBresenham(image, Vec2(50.0, 50.0), Vec2(600.0, 50.0), Color(255, 80, 80), Color(0, 255, 80));
+	drawLineBresenham(image, Vec2(50.0, 60.0), Vec2(600.0, 360.0), Color(80, 255, 120), Color(120, 255, 80));
+	drawLineBresenham(image, Vec2(320.0, 30.0), Vec2(320.0, 370.0), Color(120, 160, 255), Color(255, 230, 80));
+	drawLineBresenham(image, Vec2(100.0, 20.0), Vec2(140.0, 380.0), Color(255, 230, 120), Color(160, 120, 80));
 
 	//1.4 把整块画布打印出来
 	/*数字打印用于验证
