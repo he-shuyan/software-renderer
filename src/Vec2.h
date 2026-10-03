@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿//RGB坐标
+
+#pragma once
 #include <cmath>
 
 
