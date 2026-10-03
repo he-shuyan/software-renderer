@@ -1,24 +1,24 @@
-//RGBÑÕÉ«½¥±ä
+ï»¿//RGBé¢œè‰²æ¸å˜
 #pragma once
 
 #include <cmath>
 #include <cstdint>
 
-//ÑÕÉ«½á¹¹Ìå
+//é¢œè‰²ç»“æ„ä½“
 struct Color {
-	//ÑÕÉ«³õÊ¼»¯£¬³õÊ¼»¯Îª0±íÊ¾ºÚÉ«
+	//é¢œè‰²åˆå§‹åŒ–ï¼Œåˆå§‹åŒ–ä¸º0è¡¨ç¤ºé»‘è‰²
 	std::uint8_t r = 0;
 	std::uint8_t g = 0;
 	std::uint8_t b = 0;
 
-	Color() = default;//Éú³ÉÄ¬ÈÏ¹¹Ôìº¯Êı
-	Color(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_) :r(r_), g(g_), b(b_){}//ÓĞ²Î¹¹Ôì
+	Color() = default;//ç”Ÿæˆé»˜è®¤æ„é€ å‡½æ•°
+	Color(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_) :r(r_), g(g_), b(b_){}//æœ‰å‚æ„é€ 
 
 	
 };
 
-//linear interpolation£¨ÏßĞÔ²åÖµ£©½á¹û = a + (b - a) * tÀàËÆÓÚy=y0+(y1-y0)*(x-x0)/(x1-x0)
-	//¼ÓinlineÊ¹µÃ¸Ãº¯Êı¿ÉÒÔÔÚ²»ĞèÒªcppÎÄ¼şµÄÇé¿öÏÂÖ±½ÓÊ¹ÓÃ
+//linear interpolationï¼ˆçº¿æ€§æ’å€¼ï¼‰ç»“æœ = a + (b - a) * tç±»ä¼¼äºy=y0+(y1-y0)*(x-x0)/(x1-x0)
+	//åŠ inlineä½¿å¾—è¯¥å‡½æ•°å¯ä»¥åœ¨ä¸éœ€è¦cppæ–‡ä»¶çš„æƒ…å†µä¸‹ç›´æ¥ä½¿ç”¨
 inline Color lerp(const Color& a,const Color& b, double t) {
 	const double r = a.r + (b.r - a.r) * t;
 	const double g = a.g + (b.g - a.g) * t;
@@ -26,5 +26,5 @@ inline Color lerp(const Color& a,const Color& b, double t) {
 
 	return Color(static_cast<std::uint8_t>(std::lround(r)),
 		static_cast<std::uint8_t>(std::lround(g)),
-		static_cast<std::uint8_t>(std::lround(b1)));//std::lround£ºËÄÉáÎåÈëµ½×î½üµÄÕûÊı
+		static_cast<std::uint8_t>(std::lround(b1)));//std::lroundï¼šå››èˆäº”å…¥åˆ°æœ€è¿‘çš„æ•´æ•°
 }
