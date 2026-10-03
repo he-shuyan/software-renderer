@@ -5,8 +5,72 @@
 #include "Vec2.h"
 #include "image.h"
 #include "line.h"
+#include "Color.h"
 
+void dumpSmallLine() {
+	Image img(8, 4);
+
+	for (int y = 0; y < 4; ++y) {
+		for (int x = 0; x < 8; ++x) {
+			img.setPixel(x, y, 0, 0, 0);
+		}
+	}
+
+	const Color white(255, 255, 255);
+	drawLineBresenham(img, Vec2(0.0, 0.0), Vec2(5.0, 2.0), white, white);
+
+	std::cout << "Bresenham 在 8x4 画布上点亮的像素：";
+
+	for (int y = 0; y < 4; ++y) {
+		for (int x = 0; x < 8; ++x) {
+			if (img.getPixel(x, y, 0) != 0) {
+				std::cout << "(" << x << ", " << y << ") ";
+			}
+		}
+	}
+
+	std::cout << "\n";
+}
+
+void compareLineAlgorithms(int width, int height) {
+	Image imgDDA(width, height);
+	Image imgBres(width, height);
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			imgDDA.setPixel(x, y, 0, 0, 0);
+			imgBres.setPixel(x, y, 0, 0, 0);
+		}
+	}
+
+	const Vec2 p0(40.0, 30.0);
+	const Vec2 p1(600.0, 315.0);
+	const Color white(255, 255, 255);
+
+	drawLineDDA(imgDDA, p0, p1, white, white);
+	drawLineBresenham(imgBres, p0, p1, white, white);
+
+	int ddaCount = 0;
+	int bresCount = 0;
+	int diffCount = 0;
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			const bool inDDA = imgDDA.getPixel(x, y, 0) != 0;
+			const bool inBres = imgBres.getPixel(x, y, 0) != 0;
+
+			if (inDDA) ++ddaCount;
+			if (inBres) ++bresCount;
+			if (inDDA != inBres) ++diffCount;
+		}
+	}
+
+	std::cout << "DDA 点亮像素:      " << ddaCount << "\n";
+	std::cout << "Bresenham 点亮像素: " << bresCount << "\n";
+	std::cout << "两者不一致的像素:  " << diffCount << "\n";
+}
 int main() {
+	dumpSmallLine();
 
 	//测试Vec2.h，可删除
 /*
@@ -23,11 +87,22 @@ int main() {
 	const Vec2 n = a.normalized();
 	std::cout << "a 的单位向量 = (" << n.x << ", " << n.y << ")\n";
 	std::cout << "|单位向量| = " << n.length() << "\n";
+
+
+	//测试Color.h，可删除
+	const Color black(0, 0, 0);
+	const Color white(255, 255, 255);
+	const Color mid = lerp(black, white, 0.5);
+
+	std::cout << "混合色 = (" << static_cast<int>(mid.r) << ", "
+		<< static_cast<int>(mid.g) << ", "
+		<< static_cast<int>(mid.b) << ")\n";
 */
 	//1.1 建立空画布
 	const int width = 650;//画布列数
 	const int height = 400;//画布行数
 
+	compareLineAlgorithms(width, height);
 	const int previewStep = 10;
 
 	Image image (width, height);
@@ -99,10 +174,10 @@ auto 让编译器自己推断这个变量是什么类型
 		}
 	}
 
-	drawLine(image, Vec2(50.0, 50.0), Vec2(600.0, 50.0), 255, 80, 80);
-	drawLine(image, Vec2(50.0, 60.0), Vec2(600.0, 360.0), 80, 255, 120);
-	drawLine(image, Vec2(320.0, 30.0), Vec2(320.0, 370.0), 120, 160, 255);
-	drawLine(image, Vec2(100.0, 20.0), Vec2(140.0, 380.0), 255, 230, 120);
+	drawLineDDA(image, Vec2(50.0, 50.0), Vec2(600.0, 50.0), Color(255, 80, 80), Color(0, 255, 80));
+	drawLineDDA(image, Vec2(50.0, 60.0), Vec2(600.0, 360.0), Color(80, 255, 120), Color(120, 255, 80));
+	drawLineDDA(image, Vec2(320.0, 30.0), Vec2(320.0, 370.0), Color(120, 160, 255), Color(255, 230, 80));
+	drawLineDDA(image, Vec2(100.0, 20.0), Vec2(140.0, 380.0), Color(255, 230, 120), Color(160, 120, 80));
 
 	//1.4 把整块画布打印出来
 	/*数字打印用于验证
