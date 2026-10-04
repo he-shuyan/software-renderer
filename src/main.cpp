@@ -1,5 +1,6 @@
 #include <cstdint>//引入 uint8_t 这类"固定宽度整数"的定义,写死颜色分量字节数为1
 #include <iostream>
+#include <cmath>
 //#include <vector>
 
 #include "Vec2.h"
@@ -7,6 +8,8 @@
 #include "line.h"
 #include "Color.h"
 #include "Mat3.h"
+
+const double kPi = 3.14159265358979323846;
 
 void testMat3() {//测试函数
 	const Vec2 p(3.0, 4.0);
@@ -23,7 +26,7 @@ void testMat3() {//测试函数
 	const Vec2 d = transformPoint(Mat3::translation(10.0, 20.0), p);
 	std::cout << "平移(10,20):  (" << d.x << ", " << d.y << ")\n";
 
-	const double halfPi = 3.14159265358979323846 / 2.0;
+	const double halfPi = kPi / 2;
 	const Vec2 e = transformPoint(Mat3::rotation(halfPi), Vec2(1.0, 0.0));
 	std::cout << "把(1,0)转90度: (" << e.x << ", " << e.y << ")\n";
 
@@ -117,6 +120,49 @@ void compareLineAlgorithms(int width, int height) {
 	std::cout << "Bresenham 点亮像素: " << bresCount << "\n";
 	std::cout << "两者不一致的像素:  " << diffCount << "\n";
 }
+
+void drawBoxes(Image& image) {
+	const Vec2 canvasCenter(325.0, 200.0);
+	const int count = 8;
+	const double radius = 120.0;//半径
+	const double halfSize = 40.0;//方框半边
+
+	// 局部坐标：方框的四角，中心在原点
+	const Vec2 local[4] = {
+		Vec2(-halfSize, -halfSize),
+		Vec2(halfSize, -halfSize),
+		Vec2(halfSize,  halfSize),
+		Vec2(-halfSize,  halfSize),
+	};
+
+	const Color edge0(255, 170, 70);//橙色
+	const Color edge1(90, 200, 255);//蓝色
+
+	//画八个方框
+	for (int i = 0; i < count; ++i) {
+		//theta 是当前方框在圆周上的角度，均匀分布在[0, 2π)
+		const double theta = 2.0 * kPi * i / count;
+
+		// 在圆周上算出这个方框的位置
+		const Vec2 center(canvasCenter.x + radius * std::cos(theta),
+			canvasCenter.y + radius * std::sin(theta));
+
+		// 先绕自己的中心旋转，再搬到圆周上的位置
+		const Mat3 model = Mat3::translation(center.x, center.y)
+			* Mat3::rotation(theta);
+
+		//把四个变成世界坐标，world[j] 就是方框在画布上的实际坐标。
+		Vec2 world[4];
+		for (int j = 0; j < 4; ++j) {
+			world[j] = transformPoint(model, local[j]);
+		}
+
+		for (int j = 0; j < 4; ++j) {
+			drawLineBresenham(image, world[j], world[(j + 1) % 4], edge0, edge1);
+		}
+	}
+}
+
 int main() {
 	dumpSmallLine();
 	testMat3();
@@ -221,12 +267,14 @@ auto 让编译器自己推断这个变量是什么类型
 			image.setPixel(x, y, 20, 20, 30);
 		}
 	}
-
+    /*
 	drawLineBresenham(image, Vec2(50.0, 50.0), Vec2(600.0, 50.0), Color(255, 80, 80), Color(0, 255, 80));
 	drawLineBresenham(image, Vec2(50.0, 60.0), Vec2(600.0, 360.0), Color(80, 255, 120), Color(120, 255, 80));
 	drawLineBresenham(image, Vec2(320.0, 30.0), Vec2(320.0, 370.0), Color(120, 160, 255), Color(255, 230, 80));
 	drawLineBresenham(image, Vec2(100.0, 20.0), Vec2(140.0, 380.0), Color(255, 230, 120), Color(160, 120, 80));
+	*/
 
+	drawBoxes(image);
 	//1.4 把整块画布打印出来
 	/*数字打印用于验证
 	for (int y = 0; y < height; ++y) {
