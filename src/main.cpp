@@ -6,6 +6,54 @@
 #include "image.h"
 #include "line.h"
 #include "Color.h"
+#include "Mat3.h"
+
+void testMat3() {//测试函数
+	const Vec2 p(3.0, 4.0);
+
+	const Vec2 a = transformPoint(Mat3::identity(), p);
+	std::cout << "单位矩阵:     (" << a.x << ", " << a.y << ")\n";
+
+	const Vec2 b = transformPoint(Mat3::scaling(2.0, 2.0), p);
+	std::cout << "放大两倍:     (" << b.x << ", " << b.y << ")\n";
+
+	const Vec2 c = transformPoint(Mat3::scaling(2.0, 0.5), p);
+	std::cout << "x 加倍 y 减半: (" << c.x << ", " << c.y << ")\n";
+
+	const Vec2 d = transformPoint(Mat3::translation(10.0, 20.0), p);
+	std::cout << "平移(10,20):  (" << d.x << ", " << d.y << ")\n";
+
+	const double halfPi = 3.14159265358979323846 / 2.0;
+	const Vec2 e = transformPoint(Mat3::rotation(halfPi), Vec2(1.0, 0.0));
+	std::cout << "把(1,0)转90度: (" << e.x << ", " << e.y << ")\n";
+
+	const Vec2 f = transformPoint(Mat3::rotation(halfPi), Vec2(0.0, 1.0));
+	std::cout << "把(0,1)转90度: (" << f.x << ", " << f.y << ")\n";
+
+	const Mat3 rot = Mat3::rotation(halfPi);
+	const Mat3 trans = Mat3::translation(5.0, 0.0);
+	const Vec2 q(1.0, 0.0);
+
+	const Vec2 g = transformPoint(rot * trans, q);
+	std::cout << "先平移再旋转: (" << g.x << ", " << g.y << ")\n";
+
+	const Vec2 h = transformPoint(trans * rot, q);
+	std::cout << "先旋转再平移: (" << h.x << ", " << h.y << ")\n";
+
+	const Vec2 center(10.0, 0.0);
+	const Mat3 pivot = Mat3::translation(center.x, center.y)
+		* Mat3::rotation(halfPi)
+		* Mat3::translation(-center.x, -center.y);
+
+	const Vec2 r = transformPoint(pivot, Vec2(11.0, 0.0));
+	std::cout << "点(11,0)绕(10,0)转90度: (" << r.x << ", " << r.y << ")\n";
+
+	const Vec2 s = transformPoint(rot * trans, q);
+	const Vec2 u = transformPoint(rot, transformPoint(trans, q));
+
+	std::cout << "组合矩阵:  (" << s.x << ", " << s.y << ")\n";
+	std::cout << "嵌套调用:  (" << u.x << ", " << u.y << ")\n";
+}
 
 void dumpSmallLine() {
 	Image img(8, 4);
@@ -71,7 +119,7 @@ void compareLineAlgorithms(int width, int height) {
 }
 int main() {
 	dumpSmallLine();
-
+	testMat3();
 	//测试Vec2.h，可删除
 /*
 	const Vec2 a(3.0, 4.0);

@@ -8,4 +8,5 @@ add_executable(app
     src/main.cpp
     src/image.cpp
     src/line.cpp
+    src/Mat3.cpp
 )
