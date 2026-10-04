@@ -10,3 +10,10 @@ add_executable(app
     src/line.cpp
     src/Mat3.cpp
 )
+
+add_executable(tests
+    src/tests.cpp
+    src/image.cpp
+    src/line.cpp
+    src/Mat3.cpp
+)

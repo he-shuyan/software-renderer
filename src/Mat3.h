@@ -2,6 +2,7 @@
 
 #include "Vec2.h"
 
+const double kPi = 3.14159265358979323846;
 struct Mat3 {
 	/*             Mat3           Vec2
 	[ x' ]   [ m00  m01  m02 ]   [ x ]
