@@ -5,7 +5,7 @@
 #include "Vec2.h"
 #include "image.h"
 #include "line.h"
-
+#include "triangle.h"
 
 void testMat3() {//测试函数
 	const Vec2 p(3.0, 4.0);
@@ -117,6 +117,104 @@ void compareLineAlgorithms(int width, int height) {
 	std::cout << "两者不一致的像素:  " << diffCount << "\n";
 }
 
+//测试函数
+void testEdge() {
+	const Vec2 a(0.0, 0.0);
+	const Vec2 b(10.0, 0.0);
+
+	std::cout << "点(5, 3)  的 edge = " << edge(a, b, Vec2(5.0, 3.0)) << "\n";
+	std::cout << "点(5, -3) 的 edge = " << edge(a, b, Vec2(5.0, -3.0)) << "\n";
+	std::cout << "点(15, 0) 的 edge = " << edge(a, b, Vec2(15.0, 0.0)) << "\n";
+	std::cout << "点(5, 0)  的 edge = " << edge(a, b, Vec2(5.0, 0.0)) << "\n";
+}
+
+void testTriangleArea(int width, int height) {
+	Image img(width, height);
+
+	const Vec2 p0(100.0, 50.0);
+	const Vec2 p1(500.0, 150.0);
+	const Vec2 p2(300.0, 350.0);
+
+	drawTriangle(img, p0, p1, p2,
+		Color(255, 255, 255), Color(255, 255, 255), Color(255, 255, 255));
+
+	int count = 0;
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			if (img.getPixel(x, y, 0) != 0) {
+				++count;
+			}
+		}
+	}
+
+	const double expected = 50000.0;
+	std::cout << "填充像素 = " << count
+		<< "，理论面积 = " << expected
+		<< "，比值 = " << static_cast<double>(count) / expected << "\n";
+}
+
+void testTriangleWinding(int width, int height) {
+	Image a(width, height);
+	Image b(width, height);
+
+	const Vec2 p0(100.0, 50.0);
+	const Vec2 p1(500.0, 150.0);
+	const Vec2 p2(300.0, 350.0);
+
+	const Color c0(255, 80, 80);
+	const Color c1(80, 255, 120);
+	const Color c2(80, 140, 255);
+
+	drawTriangle(a, p0, p1, p2, c0, c1, c2);
+	drawTriangle(b, p1, p0, p2, c1, c0, c2);   // 前两个顶点对调，绕序反过来
+
+	int filled = 0;
+	int diff = 0;
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			// 只比"这一格被涂了没有"，不比颜色
+			const bool inA = a.getPixel(x, y, 0) != 0 ||
+				a.getPixel(x, y, 1) != 0 ||
+				a.getPixel(x, y, 2) != 0;
+			const bool inB = b.getPixel(x, y, 0) != 0 ||
+				b.getPixel(x, y, 1) != 0 ||
+				b.getPixel(x, y, 2) != 0;
+
+			if (inA) {
+				++filled;
+			}
+			if (inA != inB) {
+				++diff;
+			}
+		}
+	}
+
+	const double ratio = (filled == 0) ? 0.0 : 100.0 * diff / filled;
+
+	std::cout << "绕序一致性：差异 " << diff << " 像素（占填充的 "
+		<< ratio << "%）"
+		<< (ratio < 1.0 ? "  OK（边界浮点抖动）" : "  异常！")
+		<< "\n";
+}
+
+void testTriangleDegenerate(int width, int height) {
+	Image img(width, height);
+
+	drawTriangle(img, Vec2(10.0, 10.0), Vec2(200.0, 10.0), Vec2(400.0, 10.0),
+		Color(255, 0, 0), Color(0, 255, 0), Color(0, 0, 255));
+
+	int count = 0;
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			if (img.getPixel(x, y, 0) != 0) {
+				++count;
+			}
+		}
+	}
+
+	std::cout << "退化三角形点亮像素 = " << count << "（应为 0）\n";
+}
 int main() {
 	std::cout << "=== 画线算法验证 ===\n";
 	dumpSmallLine();
@@ -127,5 +225,16 @@ int main() {
 	std::cout << "\n=== Mat3 矩阵验证 ===\n";
 	testMat3();
 
+	std::cout << "\n=== edge函数验证 ===\n";
+	testEdge();
+
+	std::cout << "\n=== 三角形：面积校验 ===\n";
+	testTriangleArea(650, 400);
+
+	std::cout << "\n=== 三角形：绕序一致性 ===\n";
+	testTriangleWinding(650, 400);
+
+	std::cout << "\n=== 三角形：退化情形 ===\n";
+	testTriangleDegenerate(650, 400);;
 	return 0;
 }
