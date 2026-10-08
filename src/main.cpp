@@ -8,6 +8,7 @@
 #include "line.h"
 #include "Color.h"
 #include "Mat3.h"
+#include "triangle.h"
 
 
 
@@ -53,6 +54,56 @@ void drawBoxes(Image& image) {
 	}
 }
 
+//生成色轮
+/*
+| 角度  | r    | g    | b    | 看上去 |
+| ---   | ---  | ---  | ---  | ---    |
+| 0°   | 1.0  | 0.25 | 0.25 | 偏红   |
+| 120° | 0.25 | 1.0  | 0.25 | 偏绿   |
+| 240° | 0.25 | 0.25 | 1.0  | 偏蓝   |*/
+static Color hueColor(double angle) {
+	const double r = 0.5 + 0.5 * std::cos(angle);
+	const double g = 0.5 + 0.5 * std::cos(angle - 2.0 * kPi / 3.0);
+	const double b = 0.5 + 0.5 * std::cos(angle + 2.0 * kPi / 3.0);
+	return Color(static_cast<std::uint8_t>(std::lround(255.0 * r)),
+		static_cast<std::uint8_t>(std::lround(255.0 * g)),
+		static_cast<std::uint8_t>(std::lround(255.0 * b)));
+}
+
+//画圆盘
+void drawColorWheel(Image& image) {
+	const Vec2 center(325.0, 200.0);
+	const int slices = 12;//扇形个数
+	const double radius = 150.0;//色环半径
+
+	//全局旋转15°
+	const double wheelAngle = 0.0 * kPi / 180.0;
+	const Mat3 model = Mat3::translation(center.x, center.y)
+		* Mat3::rotation(wheelAngle);//先平移（平移到画布中心）再旋转15°
+
+	const Color centerColor(240, 240, 240);
+
+	//画12个扇形
+	for (int i = 0; i < slices; ++i) {
+		const double a0 = 2.0 * kPi * i / slices;//起始度数
+		const double a1 = 2.0 * kPi * (i + 1) / slices;//结束度数
+
+		//将极坐标转为二维坐标
+		//x = r * cos(θ)
+		//y = r * sin(θ)
+		const Vec2 local0(0.0, 0.0);                                    // 圆心
+		const Vec2 local1(radius * std::cos(a0), radius * std::sin(a0)); // 弧上起点
+		const Vec2 local2(radius * std::cos(a1), radius * std::sin(a1)); // 弧上终点
+
+		drawTriangle(image,
+			transformPoint(model, local0),
+			transformPoint(model, local1),
+			transformPoint(model, local2),
+			centerColor,
+			hueColor(a0),
+			hueColor(a1));
+	}
+}
 int main() {
 	//测试Vec2.h，可删除
 /*
@@ -159,9 +210,14 @@ auto 让编译器自己推断这个变量是什么类型
 	drawLineBresenham(image, Vec2(50.0, 60.0), Vec2(600.0, 360.0), Color(80, 255, 120), Color(120, 255, 80));
 	drawLineBresenham(image, Vec2(320.0, 30.0), Vec2(320.0, 370.0), Color(120, 160, 255), Color(255, 230, 80));
 	drawLineBresenham(image, Vec2(100.0, 20.0), Vec2(140.0, 380.0), Color(255, 230, 120), Color(160, 120, 80));
-	*/
+	
 
 	drawBoxes(image);
+	drawTriangle(image, Vec2(120.0, 80.0), Vec2(520.0, 140.0), Vec2(300.0, 360.0),
+		Color(255, 80, 80), Color(80, 255, 120), Color(80, 140, 255));*/
+
+	drawColorWheel(image);
+
 	//1.4 把整块画布打印出来
 	/*数字打印用于验证
 	for (int y = 0; y < height; ++y) {
