@@ -77,7 +77,7 @@ void drawColorWheel(Image& image) {
 	const double radius = 150.0;//色环半径
 
 	//全局旋转15°
-	const double wheelAngle = 0.0 * kPi / 180.0;
+	const double wheelAngle = 15.0 * kPi / 180.0;
 	const Mat3 model = Mat3::translation(center.x, center.y)
 		* Mat3::rotation(wheelAngle);//先平移（平移到画布中心）再旋转15°
 
