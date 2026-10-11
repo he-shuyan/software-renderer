@@ -276,6 +276,26 @@ void testLoadObj() {
 		<< model.vertices[0].y << ", " << model.vertices[0].z << ")"
 		<< "（应为 -1, -1, -1）\n";
 }
+
+void testLoadObjCases() {
+	Model model;
+
+	const bool okCube = loadObj("assets/cube.obj", model);
+	std::cout << "cube.obj        -> " << (okCube ? "成功" : "失败（错）")
+		<< "，顶点 " << model.vertices.size()
+		<< "，面 " << model.faces.size() << "（应为 8 / 12）\n";
+
+	const bool okQuad = loadObj("assets/test_quad.obj", model);
+	std::cout << "test_quad.obj   -> " << (okQuad ? "成功" : "失败（错）")
+		<< "，顶点 " << model.vertices.size()
+		<< "，面 " << model.faces.size() << "（应为 4 / 2）\n";
+
+	const bool okBroken = loadObj("assets/test_broken.obj", model);
+	std::cout << "test_broken.obj -> " << (okBroken ? "成功（错）" : "被拒绝（对）") << "\n";
+
+	const bool okMissing = loadObj("assets/not_exist.obj", model);
+	std::cout << "不存在的文件    -> " << (okMissing ? "成功（错）" : "被拒绝（对）") << "\n";
+}
 int main() {
 	std::cout << "=== 画线算法验证 ===\n";
 	dumpSmallLine();
@@ -306,5 +326,8 @@ int main() {
 
 	std::cout << "\n=== 解析器验证 ===\n";
 	testLoadObj();
+
+	std::cout << "\n=== 解析器小测试 ===\n";
+	testLoadObjCases();
 	return 0;
 }

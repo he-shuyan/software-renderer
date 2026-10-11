@@ -109,16 +109,73 @@ void drawColorWheel(Image& image) {
 //投影与线框渲染
 //把三维顶点变成画布上的二维点，然后画线。
 void drawModelWireframe(Image& image, const Model& model) {
+	if (model.vertices.empty() || model.faces.empty()) {
+		return;
+	}
+	/*
 	const Vec2 center(325.0, 200.0);
 	const double scale = 90.0;//scale：缩放因子。3D 坐标通常是 -1.0 ~ 1.0 这种小范围，乘以 90 后变成像素大小。
-
+	*/
 	//旋转矩阵
 	//旋转模型，产生立体感
 	//绕Y轴转30°，绕X轴转-20°
 	const Mat3 spin=Mat3::rotationY(30.0 * kPi / 180.0) * Mat3::rotationX(-20.0 * kPi / 180.0);
 
+	// ---------- 第一遍：量出模型投影后的包围盒 ----------
+	double minX = 0.0;
+	double maxX = 0.0;
+	double minY = 0.0;
+	double maxY = 0.0;
+	bool first = true;
+
+	for (const Vec3& v : model.vertices) {
+		const Vec3 r = transformVector(spin, v);
+
+		const double px = r.x;
+		const double py = -r.y;          // 画布 y 向下，这里先取反
+
+		if (first) {
+			minX = maxX = px;
+			minY = maxY = py;
+			first = false;
+		}
+		else {
+			minX = std::min(minX, px);
+			maxX = std::max(maxX, px);
+			minY = std::min(minY, py);
+			maxY = std::max(maxY, py);
+		}
+	}
+
+	const double modelW = maxX - minX;
+	const double modelH = maxY - minY;
+
+	if (modelW <= 0.0 || modelH <= 0.0) {
+		return;                          // 模型退化成一个点或一条线，没法摆
+	}
+	
+
+	// ---------- 算缩放和位置 ----------
+	const double margin = 0.9;           // 四周留 10% 空白
+
+	// 等比缩放：取两个方向里较小的比例
+	const double scale = std::min(image.width() * margin / modelW,
+		image.height() * margin / modelH);
+
+	//算模型中心和画布中心
+
+	//modelCenterX / Y：模型投影后的几何中心
+	const double modelCenterX = 0.5 * (minX + maxX);
+	const double modelCenterY = 0.5 * (minY + maxY);
+
+	//canvasCenterX / Y：画布的几何中心。
+	const double canvasCenterX = image.width() * 0.5;
+	const double canvasCenterY = image.height() * 0.5;
+
 	const Color edge0(255, 180, 90);
 	const Color edge1(90, 200, 255);
+
+	// ---------- 第二遍：投影并连线 ----------
 	//遍历模型每个三角形面
 	for (const Face& face : model.faces) {
 		const int idx[3] = { face.a,face.b,face.c };//idx[3]把这三个索引存到数组里，方便循环。
@@ -130,8 +187,13 @@ void drawModelWireframe(Image& image, const Model& model) {
 			const Vec3 world = transformVector(spin, model.vertices[idx[i]]);//旋转成3D坐坐标
 
 			//p[i]：1.缩放 2.平移到画布中心 3.y轴翻转
-			p[i] = Vec2(center.x + world.x * scale, center.y - world.y * scale);//3D 模型空间：Y 轴向上（符合数学和 3D 软件的惯例）//
-			                                                                    //2D 画布空间：Y 轴向下（屏幕像素坐标）
+			//p[i] = Vec2(center.x + world.x * scale, center.y - world.y * scale);//3D 模型空间：Y 轴向上（符合数学和 3D 软件的惯例）
+
+			/*
+			1. r.x - modelCenterX   → 把模型中心移到原点
+            2. * scale              → 缩放到屏幕尺度
+            3. + canvasCenterX      → 平移到画布中心*/
+			p[i] = Vec2(canvasCenterX + (world.x - modelCenterX) * scale,canvasCenterY + (-world.y - modelCenterY) * scale);                                                                 //2D 画布空间：Y 轴向下（屏幕像素坐标）
 			
 		}
 

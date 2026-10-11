@@ -61,5 +61,17 @@ bool loadObj(const std::string& path, Model& model) {//path:文件路径，例�
 			}
 		}
 	}
+
+	// 校验：每个面的三个索引都必须落在顶点范围内
+	const int vertexCount = static_cast<int>(model.vertices.size());
+
+	for (const Face& face : model.faces) {
+		if (face.a < 0 || face.a >= vertexCount ||
+			face.b < 0 || face.b >= vertexCount ||
+			face.c < 0 || face.c >= vertexCount) {
+			return false;
+		}
+	}
+
 	return true;
 }
