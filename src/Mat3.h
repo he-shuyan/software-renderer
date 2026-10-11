@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Vec2.h"
+#include "Vec3.h"
 
 const double kPi = 3.14159265358979323846;
 struct Mat3 {
@@ -14,8 +15,15 @@ struct Mat3 {
 	static Mat3 translation(double tx, double ty);//平移
 	static Mat3 scaling(double sx, double sy);//缩放
 	static Mat3 rotation(double radions);//旋转
+
+	//加入三围旋转
+	static Mat3 rotationX(double radians);
+	static Mat3 rotationY(double radians);
+	static Mat3 rotationZ(double radians);
 };
 
 Mat3 operator*(const Mat3& a, const Mat3& b);//矩阵乘法
 
 Vec2 transformPoint(const Mat3& mat, const Vec2& p);//用矩阵变换一个点
+
+Vec3 transformVector(const Mat3& mat, const Vec3& v);

@@ -9,6 +9,7 @@ set(RENDERER_SOURCES
     src/line.cpp
     src/Mat3.cpp
     src/triangle.cpp
+    src/model.cpp
 )
 
 

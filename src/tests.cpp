@@ -6,6 +6,8 @@
 #include "image.h"
 #include "line.h"
 #include "triangle.h"
+#include "Vec3.h"
+#include "model.h"
 
 void testMat3() {//测试函数
 	const Vec2 p(3.0, 4.0);
@@ -215,6 +217,65 @@ void testTriangleDegenerate(int width, int height) {
 
 	std::cout << "退化三角形点亮像素 = " << count << "（应为 0）\n";
 }
+
+void testVec3() {
+	const Vec3 a(3.0, 4.0, 0.0);
+	const Vec3 b(0.0, 3.0, 4.0);
+
+	std::cout << "|a| = " << a.length() << "（应为 5）\n";
+	std::cout << "|b| = " << b.length() << "（应为 5）\n";
+	std::cout << "a·b = " << a.dot(b) << "（应为 12）\n";
+
+	const Vec3 n = b.normalized();
+	std::cout << "b 单位化 = (" << n.x << ", " << n.y << ", " << n.z << ")"
+		<< "（应为 0, 0.6, 0.8）\n";
+	std::cout << "|单位向量| = " << n.length() << "（应为 1）\n";
+}
+
+void testVec3Rotation() {
+	const double halfPi = kPi / 2.0;
+
+	const Vec3 rx = transformVector(Mat3::rotationX(halfPi), Vec3(0.0, 1.0, 0.0));
+	std::cout << "绕 X 转 90 度，(0,1,0) -> (" << rx.x << ", " << rx.y << ", " << rx.z << ")"
+		<< "  应为 (0, 0, 1)\n";
+
+	const Vec3 ry = transformVector(Mat3::rotationY(halfPi), Vec3(1.0, 0.0, 0.0));
+	std::cout << "绕 Y 转 90 度，(1,0,0) -> (" << ry.x << ", " << ry.y << ", " << ry.z << ")"
+		<< "  应为 (0, 0, -1)\n";
+
+	const Vec3 rz = transformVector(Mat3::rotationZ(halfPi), Vec3(1.0, 0.0, 0.0));
+	std::cout << "绕 Z 转 90 度，(1,0,0) -> (" << rz.x << ", " << rz.y << ", " << rz.z << ")"
+		<< "  应为 (0, 1, 0)\n";
+}
+
+void testLoadObj() {
+	Model model;
+
+	if (!loadObj("assets/cube.obj", model)) {
+		std::cout << "加载失败（检查路径和当前工作目录）\n";
+		return;
+	}
+
+	std::cout << "顶点数 = " << model.vertices.size() << "（应为 8）\n";
+	std::cout << "三角形面数 = " << model.faces.size() << "（应为 12）\n";
+
+	bool indexOk = true;
+	const int vertexCount = static_cast<int>(model.vertices.size());
+
+	for (const Face& face : model.faces) {
+		if (face.a < 0 || face.a >= vertexCount ||
+			face.b < 0 || face.b >= vertexCount ||
+			face.c < 0 || face.c >= vertexCount) {
+			indexOk = false;
+		}
+	}
+
+	std::cout << "索引范围检查 = " << (indexOk ? "通过" : "失败") << "\n";
+
+	std::cout << "第 1 个顶点 = (" << model.vertices[0].x << ", "
+		<< model.vertices[0].y << ", " << model.vertices[0].z << ")"
+		<< "（应为 -1, -1, -1）\n";
+}
 int main() {
 	std::cout << "=== 画线算法验证 ===\n";
 	dumpSmallLine();
@@ -236,5 +297,14 @@ int main() {
 
 	std::cout << "\n=== 三角形：退化情形 ===\n";
 	testTriangleDegenerate(650, 400);;
+
+	std::cout << "\n=== Vec3 三维向量验证 ===\n";
+	testVec3();
+
+	std::cout << "\n=== 三个旋转测试 ===\n";
+	testVec3Rotation();
+
+	std::cout << "\n=== 解析器验证 ===\n";
+	testLoadObj();
 	return 0;
 }

@@ -9,6 +9,7 @@
 #include "Color.h"
 #include "Mat3.h"
 #include "triangle.h"
+#include "model.h"
 
 
 
@@ -103,6 +104,43 @@ void drawColorWheel(Image& image) {
 			hueColor(a0),
 			hueColor(a1));
 	}
+}
+
+//投影与线框渲染
+//把三维顶点变成画布上的二维点，然后画线。
+void drawModelWireframe(Image& image, const Model& model) {
+	const Vec2 center(325.0, 200.0);
+	const double scale = 90.0;//scale：缩放因子。3D 坐标通常是 -1.0 ~ 1.0 这种小范围，乘以 90 后变成像素大小。
+
+	//旋转矩阵
+	//旋转模型，产生立体感
+	//绕Y轴转30°，绕X轴转-20°
+	const Mat3 spin=Mat3::rotationY(30.0 * kPi / 180.0) * Mat3::rotationX(-20.0 * kPi / 180.0);
+
+	const Color edge0(255, 180, 90);
+	const Color edge1(90, 200, 255);
+	//遍历模型每个三角形面
+	for (const Face& face : model.faces) {
+		const int idx[3] = { face.a,face.b,face.c };//idx[3]把这三个索引存到数组里，方便循环。
+
+		Vec2 p[3];//用来存投影到2D后的三个点
+
+		//3D → 2D 投影（核心步骤）
+		for (int i = 0; i < 3; ++i) {
+			const Vec3 world = transformVector(spin, model.vertices[idx[i]]);//旋转成3D坐坐标
+
+			//p[i]：1.缩放 2.平移到画布中心 3.y轴翻转
+			p[i] = Vec2(center.x + world.x * scale, center.y - world.y * scale);//3D 模型空间：Y 轴向上（符合数学和 3D 软件的惯例）//
+			                                                                    //2D 画布空间：Y 轴向下（屏幕像素坐标）
+			
+		}
+
+		//画三角形三条边
+		for (int i = 0; i < 3; ++i) {
+			drawLineBresenham(image, p[i], p[(i + 1) % 3], edge0, edge1);
+		}
+	}
+	
 }
 int main() {
 	//测试Vec2.h，可删除
@@ -216,8 +254,19 @@ auto 让编译器自己推断这个变量是什么类型
 	drawTriangle(image, Vec2(120.0, 80.0), Vec2(520.0, 140.0), Vec2(300.0, 360.0),
 		Color(255, 80, 80), Color(80, 255, 120), Color(80, 140, 255));*/
 
+	/*画色轮
 	drawColorWheel(image);
+	*/
 
+	//模型加载与渲染
+	Model model;
+
+	if (!loadObj("assets/cube.obj", model)) {
+		std::cout << "模型加载失败\n";
+		return 1;
+	}
+
+	drawModelWireframe(image, model);
 	//1.4 把整块画布打印出来
 	/*数字打印用于验证
 	for (int y = 0; y < height; ++y) {

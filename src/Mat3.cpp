@@ -106,3 +106,41 @@ Vec2 transformPoint(const Mat3& mat, const Vec2& p) {
 	//透视除法：除以 w，把齐次坐标变回普通坐标
 	return Vec2(x / w, y/w);
 }
+
+Mat3 Mat3::rotationX(double radians) {
+	const double c = std::cos(radians);
+	const double s = std::sin(radians);
+
+	Mat3 result = identity();
+
+	result.m[1][1] = c;
+	result.m[1][2] = -s;
+	result.m[2][1] = s;
+	result.m[2][2] = c;
+
+	return result;
+}
+
+Mat3 Mat3::rotationY(double radians) {
+	const double c = std::cos(radians);
+	const double s = std::sin(radians);
+
+	Mat3 result = identity();
+
+	result.m[0][0] = c;
+	result.m[0][2] = s;
+	result.m[2][0] = -s;
+	result.m[2][2] = c;
+
+	return result;
+}
+
+Mat3 Mat3::rotationZ(double radians) {
+	return rotation(radians);
+}
+
+Vec3 transformVector(const Mat3& mat, const Vec3& v) {
+	return Vec3(mat.m[0][0] * v.x + mat.m[0][1] * v.y + mat.m[0][2] * v.z,
+		mat.m[1][0] * v.x + mat.m[1][1] * v.y + mat.m[1][2] * v.z,
+		mat.m[2][0] * v.x + mat.m[2][1] * v.y + mat.m[2][2] * v.z);
+}
