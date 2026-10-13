@@ -72,6 +72,13 @@ static Color hueColor(double angle) {
 		static_cast<std::uint8_t>(std::lround(255.0 * b)));
 }
 
+//把法线映射成颜色
+static Color normalColor(const Vec3& n) {
+	return Color(static_cast<std::uint8_t>(std::lround(255.0 * (0.5 + 0.5 * n.x))),
+		static_cast<std::uint8_t>(std::lround(255.0 * (0.5 + 0.5 * n.y))),
+		static_cast<std::uint8_t>(std::lround(255.0 * (0.5 + 0.5 * n.z))));
+}
+
 //画圆盘
 void drawColorWheel(Image& image) {
 	const Vec2 center(325.0, 200.0);
@@ -273,10 +280,31 @@ void drawModelDepth(Image& image, DepthBuffer& depth, const Model& model) {
 	const Color farColor(40, 60, 140);//冷蓝色
 
 	// ---------- 第二遍：投影并填充 ----------
+
+	int frontFaces = 0;
+	int culledFaces = 0;
+
 	for (const Face& face : model.faces) {
+
 		const int idx[3] = { face.a, face.b, face.c };
 
+		// 先用世界坐标算出这个面的法线
+		const Vec3 a = transformVector(spin, model.vertices[face.a]);
+		const Vec3 b = transformVector(spin, model.vertices[face.b]);
+		const Vec3 c = transformVector(spin, model.vertices[face.c]);
+
+		const Vec3 n = (b - a).cross(c - a).normalized();
+
+		if (n.z <= 0.0) {
+			++culledFaces;
+			continue;//背对观察者，跳过
+		}
+
+		++frontFaces;
+
 		ScreenVertex v[3];
+
+		const Color faceColor = normalColor(n);
 
 		for (int i = 0; i < 3; ++i) {
 			const Vec3 r = transformVector(spin, model.vertices[idx[i]]);
@@ -292,15 +320,20 @@ void drawModelDepth(Image& image, DepthBuffer& depth, const Model& model) {
 			//写入深度
 			v[i].depth = -r.z;
 
+			//整个面共用一个颜色，颜色由面的朝向决定
+			v[i].color = faceColor;
+			/*
 			const double t = (depthSpan > 0.0)
 				? (v[i].depth - minDist) / depthSpan//把深度归一化到 [0, 1]。
 				: 0.0;
 
-			v[i].color = lerp(nearColor, farColor, t);
+			v[i].color = lerp(nearColor, farColor, t);*/
 		}
 
 		drawTriangleDepth(image, depth, v[0], v[1], v[2]);
 	}
+	std::cout << "正面三角形 = " << frontFaces
+		<< "，被剔除 = " << culledFaces << "（应为 6 / 6）\n";
 }
 int main() {
 	//测试Vec2.h，可删除
