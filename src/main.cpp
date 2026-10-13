@@ -72,7 +72,27 @@ static Color hueColor(double angle) {
 		static_cast<std::uint8_t>(std::lround(255.0 * b)));
 }
 
-//把法线映射成颜色
+
+
+// ① 单色：整个模型一个颜色
+static Color solidColor() {
+	return Color(205, 205, 215);
+}
+
+// ② 深度着色：近处暖亮，远处冷暗
+static Color depthColor(double depth, double minDepth, double span) {
+	const Color nearColor(255, 200, 120);
+	const Color farColor(40, 60, 140);
+
+	if (span <= 0.0) {
+		return nearColor;
+	}
+
+	const double t = (depth - minDepth) / span;
+	return lerp(nearColor, farColor, t);
+}
+
+// ③ 面法线着色：方向映射成 RGB（你手上已经有这个，名字保持不动即可）
 static Color normalColor(const Vec3& n) {
 	return Color(static_cast<std::uint8_t>(std::lround(255.0 * (0.5 + 0.5 * n.x))),
 		static_cast<std::uint8_t>(std::lround(255.0 * (0.5 + 0.5 * n.y))),
@@ -320,14 +340,10 @@ void drawModelDepth(Image& image, DepthBuffer& depth, const Model& model) {
 			//写入深度
 			v[i].depth = -r.z;
 
-			//整个面共用一个颜色，颜色由面的朝向决定
-			v[i].color = faceColor;
-			/*
-			const double t = (depthSpan > 0.0)
-				? (v[i].depth - minDist) / depthSpan//把深度归一化到 [0, 1]。
-				: 0.0;
-
-			v[i].color = lerp(nearColor, farColor, t);*/
+			// ===== 三种着色，留一行、注释掉其余两行 =====
+			v[i].color = normalColor(n);
+			// v[i].color = depthColor(v[i].depth, minDist, depthSpan);
+			// v[i].color = solidColor();
 		}
 
 		drawTriangleDepth(image, depth, v[0], v[1], v[2]);
