@@ -230,6 +230,14 @@ void testVec3() {
 	std::cout << "b 单位化 = (" << n.x << ", " << n.y << ", " << n.z << ")"
 		<< "（应为 0, 0.6, 0.8）\n";
 	std::cout << "|单位向量| = " << n.length() << "（应为 1）\n";
+
+	const Vec3 cx = Vec3(1.0, 0.0, 0.0).cross(Vec3(0.0, 1.0, 0.0));
+	const Vec3 cy = Vec3(0.0, 1.0, 0.0).cross(Vec3(1.0, 0.0, 0.0));
+
+	std::cout << "x 叉乘 y = (" << cx.x << ", " << cx.y << ", " << cx.z << ")"
+		<< "（应为 0, 0, 1）\n";
+	std::cout << "y 叉乘 x = (" << cy.x << ", " << cy.y << ", " << cy.z << ")"
+		<< "（应为 0, 0, -1）\n";
 }
 
 void testVec3Rotation() {
@@ -350,5 +358,7 @@ int main() {
 
 	std::cout << "\n=== 深度检测测试 ===\n";
 	testDepthBuffer();
+	
+
 	return 0;
 }
