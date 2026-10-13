@@ -296,6 +296,24 @@ void testLoadObjCases() {
 	const bool okMissing = loadObj("assets/not_exist.obj", model);
 	std::cout << "不存在的文件    -> " << (okMissing ? "成功（错）" : "被拒绝（对）") << "\n";
 }
+
+void testDepthBuffer() {
+	DepthBuffer depth;
+	depth.resize(4, 2);
+
+	std::cout << "初始深度 = " << depth.data[1] << "（应为 1e+30）\n";
+
+	const bool a = depth.testAndSet(1, 0, 5.0);
+	const bool b = depth.testAndSet(1, 0, 9.0);
+	const bool c = depth.testAndSet(1, 0, 2.0);
+	const bool d = depth.testAndSet(1, 0, 7.0);
+
+	std::cout << "写 5.0 -> " << (a ? "通过" : "被拒") << "（应通过）\n";
+	std::cout << "写 9.0 -> " << (b ? "通过" : "被拒") << "（应被拒：更远）\n";
+	std::cout << "写 2.0 -> " << (c ? "通过" : "被拒") << "（应通过：更近）\n";
+	std::cout << "写 7.0 -> " << (d ? "通过" : "被拒") << "（应被拒：比 2.0 远）\n";
+	std::cout << "最终深度 = " << depth.data[1] << "（应为 2）\n";
+}
 int main() {
 	std::cout << "=== 画线算法验证 ===\n";
 	dumpSmallLine();
@@ -329,5 +347,8 @@ int main() {
 
 	std::cout << "\n=== 解析器小测试 ===\n";
 	testLoadObjCases();
+
+	std::cout << "\n=== 深度检测测试 ===\n";
+	testDepthBuffer();
 	return 0;
 }

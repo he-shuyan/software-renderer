@@ -21,7 +21,8 @@ static Color mix3(const Color& c0, const Color& c1, const Color& c2,
 		static_cast<std::uint8_t>(std::lround(b)));
 }
 
-//包围盒+颜色填充
+/*3D也要用光栅化，所以额外写一个光栅化核心
+//包围盒+颜色填充(2D填充)
 void drawTriangle(Image& image, Vec2 p0, Vec2 p1, Vec2 p2, Color c0, Color c1, Color c2) {
 	//area是以p0,p1,p2为顶点的三角形有向面积的二倍
 	double area2 = edge(p0, p1, p2);
@@ -66,4 +67,76 @@ void drawTriangle(Image& image, Vec2 p0, Vec2 p1, Vec2 p2, Color c0, Color c1, C
 			}
 		}
 	}
+}
+*/
+
+
+// 共用光栅化核心：depth 为 nullptr 时不做深度测试
+static void rasterizeTriangle(Image& image, DepthBuffer* depth, ScreenVertex v0, ScreenVertex v1, ScreenVertex v2) {
+
+	double area2 = edge(v0.pos, v1.pos, v2.pos);
+
+	if (area2 == 0.0) {
+		return;
+	}
+
+	if (area2 < 0.0) {
+		std::swap(v1, v2);
+		area2 = -area2;
+	}
+
+	//包围盒
+	const double minXd = std::min({ v0.pos.x, v1.pos.x, v2.pos.x });
+	const double maxXd = std::max({ v0.pos.x, v1.pos.x, v2.pos.x });
+	const double minYd = std::min({ v0.pos.y, v1.pos.y, v2.pos.y });
+	const double maxYd = std::max({ v0.pos.y, v1.pos.y, v2.pos.y });
+
+	//再用 floor 向下取整、ceil 向上取整，转成整数像素范围。
+	const int minX = std::max(0, static_cast<int>(std::floor(minXd)));
+	const int maxX = std::min(image.width() - 1, static_cast<int>(std::ceil(maxXd)));
+	const int minY = std::max(0, static_cast<int>(std::floor(minYd)));
+	const int maxY = std::min(image.height() - 1, static_cast<int>(std::ceil(maxYd)));
+
+	//遍历包围盒
+	for (int y = minY; y <= maxY; ++y) {
+		for (int x = minX; x < maxX; ++x) {
+			const Vec2 p(static_cast<double>(x) + 0.5,
+				static_cast<double>(y) + 0.5);
+
+			const double w0 = edge(v1.pos, v2.pos, p) / area2;
+			const double w1 = edge(v2.pos, v0.pos, p) / area2;
+			const double w2 = edge(v0.pos, v1.pos, p) / area2;
+
+			if (w0 < 0.0 || w1 < 0.0 || w2 < 0.0) {
+				continue;
+			}
+
+			//深度插值
+			const double d = w0 * v0.depth + w1 * v1.depth + w2 * v2.depth;
+
+			//深度测试
+			if (depth != nullptr && !depth->testAndSet(x, y, d)) {
+				continue;
+			}
+
+			const Color c = mix3(v0.color, v1.color, v2.color, w0, w1, w2);
+			image.setPixel(x, y, c.r, c.g, c.b);
+		}
+	}
+}
+
+//2D包装
+void drawTriangle(Image& image, Vec2 p0, Vec2 p1, Vec2 p2,
+	Color c0, Color c1, Color c2) {
+	const ScreenVertex v0{ Vec2(p0.x, p0.y), 0.0, c0 };
+	const ScreenVertex v1{ Vec2(p1.x, p1.y), 0.0, c1 };
+	const ScreenVertex v2{ Vec2(p2.x, p2.y), 0.0, c2 };
+
+	rasterizeTriangle(image, nullptr, v0, v1, v2);
+}
+
+//3D包装
+void drawTriangleDepth(Image& image, DepthBuffer& depth,
+	ScreenVertex v0, ScreenVertex v1, ScreenVertex v2) {
+	rasterizeTriangle(image, &depth, v0, v1, v2);
 }

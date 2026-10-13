@@ -10,6 +10,7 @@ set(RENDERER_SOURCES
     src/Mat3.cpp
     src/triangle.cpp
     src/model.cpp
+    src/depth.cpp
 )
 
 

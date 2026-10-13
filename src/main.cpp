@@ -10,6 +10,7 @@
 #include "Mat3.h"
 #include "triangle.h"
 #include "model.h"
+#include "depth.h"
 
 
 
@@ -108,7 +109,7 @@ void drawColorWheel(Image& image) {
 
 //投影与线框渲染
 //把三维顶点变成画布上的二维点，然后画线。
-void drawModelWireframe(Image& image, const Model& model) {
+void drawModelWireframe(Image& image, const Model& model) {//wireframe线框模型
 	if (model.vertices.empty() || model.faces.empty()) {
 		return;
 	}
@@ -203,6 +204,103 @@ void drawModelWireframe(Image& image, const Model& model) {
 		}
 	}
 	
+}
+
+//3D实心渲染
+void drawModelDepth(Image& image, DepthBuffer& depth, const Model& model) {
+	
+	//空模型检查
+	if (model.vertices.empty() || model.faces.empty()) {
+		return;
+	}
+
+	//旋转矩阵
+	//先绕 X 轴转 -20 度，再绕 Y 轴转 30 度
+	const Mat3 spin= Mat3::rotationY(30.0 * kPi / 180.0)* Mat3::rotationX(-20.0 * kPi / 180.0);
+
+	// ---------- 第一遍：求包围盒（x、y 和深度都要） ----------
+	double minX = 0.0, maxX = 0.0;
+	double minY = 0.0, maxY = 0.0;
+	double minDist = 0.0, maxDist = 0.0;
+	bool first = true;
+
+	for (const Vec3& v : model.vertices) {
+		const Vec3 r = transformVector(spin, v);
+
+		const double px = r.x;
+		const double py = -r.y;
+		const double pd = -r.z;          // 深度：越小越近
+
+		if (first) {
+			minX = maxX = px;
+			minY = maxY = py;
+			minDist = maxDist = pd;
+			first = false;
+		}
+		else {
+			minX = std::min(minX, px);
+			maxX = std::max(maxX, px);
+			minY = std::min(minY, py);
+			maxY = std::max(maxY, py);
+			minDist = std::min(minDist, pd);
+			maxDist = std::max(maxDist, pd);
+		}
+	}
+	
+	//计算模型尺寸和缩放(留10%空白）
+
+	const double modelW = maxX - minX;
+	const double modelH = maxY - minY;
+
+	if (modelW <= 0.0 || modelH <= 0.0) {
+		return;
+	}
+	const double margin = 0.9;
+	const double scale = std::min(image.width() * margin / modelW,image.height() * margin / modelH);
+
+	//模型中心和画布中心
+	const double modelCenterX = 0.5 * (minX + maxX);
+	const double modelCenterY = 0.5 * (minY + maxY);
+
+	const double canvasCenterX = image.width() * 0.5;
+	const double canvasCenterY = image.height() * 0.5;
+
+	//深度范围和颜色映射
+	const double depthSpan = maxDist - minDist;
+
+	//近处暖亮，远处冷暗
+	const Color nearColor(255, 200, 120);//暖橙色
+	const Color farColor(40, 60, 140);//冷蓝色
+
+	// ---------- 第二遍：投影并填充 ----------
+	for (const Face& face : model.faces) {
+		const int idx[3] = { face.a, face.b, face.c };
+
+		ScreenVertex v[3];
+
+		for (int i = 0; i < 3; ++i) {
+			const Vec3 r = transformVector(spin, model.vertices[idx[i]]);
+
+			//投影到屏幕
+			/*
+			1. r.x - modelCenterX   → 把模型中心移到原点
+			2. * scale              → 缩放到屏幕尺度
+			3. + canvasCenterX      → 平移到画布中心*/
+			v[i].pos = Vec2(canvasCenterX + (r.x - modelCenterX) * scale,
+				canvasCenterY + (-r.y - modelCenterY) * scale);
+
+			//写入深度
+			v[i].depth = -r.z;
+
+			const double t = (depthSpan > 0.0)
+				? (v[i].depth - minDist) / depthSpan//把深度归一化到 [0, 1]。
+				: 0.0;
+
+			v[i].color = lerp(nearColor, farColor, t);
+		}
+
+		drawTriangleDepth(image, depth, v[0], v[1], v[2]);
+	}
 }
 int main() {
 	//测试Vec2.h，可删除
@@ -328,7 +426,11 @@ auto 让编译器自己推断这个变量是什么类型
 		return 1;
 	}
 
-	drawModelWireframe(image, model);
+	//drawModelWireframe(image, model);
+	DepthBuffer depth;
+	depth.resize(width, height);
+
+	drawModelDepth(image, depth, model);
 	//1.4 把整块画布打印出来
 	/*数字打印用于验证
 	for (int y = 0; y < height; ++y) {
