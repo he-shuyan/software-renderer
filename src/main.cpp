@@ -341,8 +341,8 @@ void drawModelDepth(Image& image, DepthBuffer& depth, const Model& model) {
 			v[i].depth = -r.z;
 
 			// ===== 三种着色，留一行、注释掉其余两行 =====
-			v[i].color = normalColor(n);
-			// v[i].color = depthColor(v[i].depth, minDist, depthSpan);
+			//v[i].color = normalColor(n);
+			 v[i].color = depthColor(v[i].depth, minDist, depthSpan);
 			// v[i].color = solidColor();
 		}
 
