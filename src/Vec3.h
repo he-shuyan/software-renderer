@@ -35,4 +35,11 @@ struct Vec3 {
 		}
 		return Vec3(x / len, y / len, z / len);
 	}
+
+	//叉积  a × b得到新矩阵c,垂直于a b
+	Vec3 cross(const Vec3& other) const {
+		return Vec3(y * other.z - z * other.y,
+			z * other.x - x * other.z,
+			x * other.y - y * other.x);
+	}
 };
