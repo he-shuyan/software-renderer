@@ -8,6 +8,7 @@ set(RENDERER_SOURCES
     src/image.cpp
     src/line.cpp
     src/Mat3.cpp
+    src/Mat4.cpp
     src/triangle.cpp
     src/model.cpp
     src/depth.cpp

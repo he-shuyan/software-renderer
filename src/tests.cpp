@@ -8,6 +8,8 @@
 #include "triangle.h"
 #include "Vec3.h"
 #include "model.h"
+#include "Mat4.h"
+
 
 void testMat3() {//测试函数
 	const Vec2 p(3.0, 4.0);
@@ -322,6 +324,84 @@ void testDepthBuffer() {
 	std::cout << "写 7.0 -> " << (d ? "通过" : "被拒") << "（应被拒：比 2.0 远）\n";
 	std::cout << "最终深度 = " << depth.data[1] << "（应为 2）\n";
 }
+
+void testMat4Basics() {
+	const Mat4 identity = Mat4::identity();
+
+	std::cout << "单位矩阵对角线 = "
+		<< identity.m[0][0] << " " << identity.m[1][1] << " "
+		<< identity.m[2][2] << " " << identity.m[3][3] << "\n";
+
+	std::cout << "单位矩阵 [0][3] = " << identity.m[0][3] << "（应为 0）\n";
+
+	const Mat4 trans = Mat4::translation(3.0, 4.0, 5.0);
+
+	std::cout << "平移矩阵第 3 列 = "
+		<< trans.m[0][3] << " " << trans.m[1][3] << " " << trans.m[2][3] << "\n";
+
+	
+
+	const Vec4 p(1.0, 2.0, 3.0, 1.0);
+
+	const Vec4 a = transform(identity, p);
+	std::cout << "单位矩阵: (" << a.x << ", " << a.y << ", " << a.z << ", " << a.w << ")"
+		<< "  应为 (1, 2, 3, 1)\n";
+
+	const Vec4 b = transform(trans, p);
+	std::cout << "平移(3,4,5): (" << b.x << ", " << b.y << ", " << b.z << ", " << b.w << ")"
+		<< "  应为 (4, 6, 8, 1)\n";
+
+	const Mat4 it = identity * trans;
+	const Vec4 c = transform(it, p);
+	std::cout << "I × T 作用于 p: (" << c.x << ", " << c.y << ", " << c.z << ", " << c.w << ")"
+		<< "  应为 (4, 6, 8, 1)\n";
+
+	const Vec4 homogeneous(2.0, 4.0, 6.0, 2.0);
+	const Vec3 cart = toCartesian(homogeneous);
+	std::cout << "齐次 (2,4,6,2) -> 笛卡尔: (" << cart.x << ", " << cart.y << ", " << cart.z << ")"
+		<< "  应为 (1, 2, 3)\n";
+}
+
+void testMat4Rotation() {
+	const double halfPi = kPi / 2.0;
+	const Vec4 p(1.0, 0.0, 0.0, 1.0);
+
+	const Vec4 rz = transform(Mat4::rotationZ(halfPi), p);
+	std::cout << "绕 Z 转90度: (" << rz.x << ", " << rz.y << ", " << rz.z << ")"
+		<< "  应为 (0, 1, 0)\n";
+
+	const Vec4 ry = transform(Mat4::rotationY(halfPi), p);
+	std::cout << "绕 Y 转90度: (" << ry.x << ", " << ry.y << ", " << ry.z << ")"
+		<< "  应为 (0, 0, -1)\n";
+
+	const Mat4 tr = Mat4::translation(3.0, 4.0, 5.0) * Mat4::rotationZ(halfPi);
+	const Vec4 a = transform(tr, p);
+	std::cout << "先转再平移: (" << a.x << ", " << a.y << ", " << a.z << ")"
+		<< "  应为 (3, 5, 5)\n";
+
+	const Mat4 rt = Mat4::rotationZ(halfPi) * Mat4::translation(3.0, 4.0, 5.0);
+	const Vec4 b = transform(rt, p);
+	std::cout << "先平移再转: (" << b.x << ", " << b.y << ", " << b.z << ")"
+		<< "  应为 (-4, 4, 5)\n";
+}
+
+void testLookAt() {
+	const Mat4 view = Mat4::lookAt(Vec3(0.0, 0.0, 5.0),
+		Vec3(0.0, 0.0, 0.0),
+		Vec3(0.0, 1.0, 0.0));
+
+	const Vec4 o = transform(view, Vec4(0.0, 0.0, 0.0, 1.0));
+	std::cout << "相机在(0,0,5)、看向原点：原点 -> (" << o.x << ", " << o.y << ", " << o.z << ")"
+		<< "  应为 (0, 0, -5)\n";
+
+	const Vec4 e = transform(view, Vec4(0.0, 0.0, 5.0, 1.0));
+	std::cout << "相机自己的位置 -> (" << e.x << ", " << e.y << ", " << e.z << ")"
+		<< "  应为 (0, 0, 0)\n";
+
+	const Vec4 x2 = transform(view, Vec4(2.0, 0.0, 0.0, 1.0));
+	std::cout << "(2,0,0) -> (" << x2.x << ", " << x2.y << ", " << x2.z << ")"
+		<< "  应为 (2, 0, -5)\n";
+}
 int main() {
 	std::cout << "=== 画线算法验证 ===\n";
 	dumpSmallLine();
@@ -358,7 +438,15 @@ int main() {
 
 	std::cout << "\n=== 深度检测测试 ===\n";
 	testDepthBuffer();
+
+	std::cout << "\n=== Mat4 矩阵验证 ===\n";
+	testMat4Basics();
 	
+	std::cout << "\n=== Mat4 旋转验证 ===\n";
+	testMat4Rotation();
+
+	std::cout << "\n=== 相机检测 ===\n";
+	testLookAt();
 
 	return 0;
 }
