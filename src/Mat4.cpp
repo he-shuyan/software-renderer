@@ -156,3 +156,19 @@ Mat4 Mat4::perspective(double fovYRadians, double aspect, double nearZ, double f
 
     return result;
 }
+
+Mat4 Mat4::orthographic(double left, double right, double bottom, double top,
+    double nearZ, double farZ) {
+    Mat4 result = identity();
+
+    result.m[0][0] = 2.0 / (right - left);
+    result.m[0][3] = -(right + left) / (right - left);
+
+    result.m[1][1] = 2.0 / (top - bottom);
+    result.m[1][3] = -(top + bottom) / (top - bottom);
+
+    result.m[2][2] = -2.0 / (farZ - nearZ);
+    result.m[2][3] = -(farZ + nearZ) / (farZ - nearZ);
+
+    return result;
+}

@@ -25,6 +25,9 @@ struct Mat4{
 	//透视投影
 	static Mat4 perspective(double fovYRadians, double aspect, double nearZ, double farZ);
 
+	static Mat4 orthographic(double left, double right, double bottom, double top,
+		double nearZ, double farZ);
+
 };
 
 Mat4 operator*(const Mat4& a, const Mat4& b);

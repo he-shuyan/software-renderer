@@ -385,8 +385,12 @@ void drawModelPerspective(Image& image, DepthBuffer& depth, const Model& model) 
 	const Mat4 viewMat = Mat4::lookAt(Vec3(3.5, 2.5, 3.5),Vec3(0.0, 0.0, 0.0),Vec3(0.0, 1.0, 0.0));
 
 	//投影矩阵
-	const Mat4 projMat = Mat4::perspective(55.0 * kPi / 180.0, static_cast<double>(image.width()) / image.height(), 0.1, 100.0);
-
+	const bool usePerspective = true;
+	const Mat4 projMat = usePerspective
+		? Mat4::perspective(55.0 * kPi / 180.0,
+			static_cast<double>(image.width()) / image.height(),
+			0.1, 100.0)
+		: Mat4::orthographic(-3.0, 3.0, -3.0, 3.0, 0.1, 100.0);
 	//预乘MVP
 	const Mat4 mvp = projMat * viewMat * modelMat;
 
@@ -426,7 +430,7 @@ void drawModelPerspective(Image& image, DepthBuffer& depth, const Model& model) 
 			const Vec2 screen = toViewport(ndc, image.width(), image.height());
 
 			v[i].pos = screen;
-			v[i].depth = -1.0 / clip.w;
+			v[i].depth = usePerspective ? -1.0 / clip.w : ndc.z;
 			v[i].color = scaleColor(baseColor, brightness);
 			
 		}
