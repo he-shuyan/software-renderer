@@ -402,6 +402,24 @@ void testLookAt() {
 	std::cout << "(2,0,0) -> (" << x2.x << ", " << x2.y << ", " << x2.z << ")"
 		<< "  应为 (2, 0, -5)\n";
 }
+
+void testPerspective() {
+	// fov 90 度、宽高比 1 时，tan(45°) = 1，所以 f = 1，矩阵非常好看
+	const Mat4 proj = Mat4::perspective(kPi / 2.0, 1.0, 0.1, 100.0);
+
+	const Vec4 a = transform(proj, Vec4(1.0, 1.0, -1.0, 1.0));
+	std::cout << "(1,1,-1) 裁剪空间 = (" << a.x << ", " << a.y << ", " << a.z << ", " << a.w << ")\n";
+
+	const Vec3 na = toCartesian(a);
+	std::cout << "  -> NDC = (" << na.x << ", " << na.y << ", " << na.z << ")"
+		<< "   x、y 应为 (1, 1)\n";
+
+	const Vec4 b = transform(proj, Vec4(2.0, 2.0, -2.0, 1.0));
+	const Vec3 nb = toCartesian(b);
+	std::cout << "(2,2,-2) 裁剪空间 w = " << b.w
+		<< "，NDC = (" << nb.x << ", " << nb.y << ")"
+		<< "   x、y 也应是 (1, 1)\n";
+}
 int main() {
 	std::cout << "=== 画线算法验证 ===\n";
 	dumpSmallLine();
@@ -448,5 +466,7 @@ int main() {
 	std::cout << "\n=== 相机检测 ===\n";
 	testLookAt();
 
+	std::cout << "\n=== 透视投影检测 ===\n";
+	testPerspective();
 	return 0;
 }

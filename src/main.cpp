@@ -11,6 +11,7 @@
 #include "triangle.h"
 #include "model.h"
 #include "depth.h"
+#include "Mat4.h"
 
 
 
@@ -97,6 +98,12 @@ static Color normalColor(const Vec3& n) {
 	return Color(static_cast<std::uint8_t>(std::lround(255.0 * (0.5 + 0.5 * n.x))),
 		static_cast<std::uint8_t>(std::lround(255.0 * (0.5 + 0.5 * n.y))),
 		static_cast<std::uint8_t>(std::lround(255.0 * (0.5 + 0.5 * n.z))));
+}
+// ④ 亮度调制：把颜色按系数压暗或提亮（k = 1 表示原样）
+static Color scaleColor(const Color& c, double k) {
+	return Color(static_cast<std::uint8_t>(std::lround(c.r * k)),
+		static_cast<std::uint8_t>(std::lround(c.g * k)),
+		static_cast<std::uint8_t>(std::lround(c.b * k)));
 }
 
 //画圆盘
@@ -233,6 +240,16 @@ void drawModelWireframe(Image& image, const Model& model) {//wireframe线框模�
 	
 }
 
+//从数学到屏幕  NDC->画布像素
+//NDC坐标[-1,1]
+static Vec2 toViewport(const Vec3& ndc, int width, int height) {
+	//把[-1,1]映射到[0,1]
+	const double sx = (ndc.x * 0.5 + 0.5) * static_cast<double>(width);
+	const double sy = (0.5 - ndc.y * 0.5) * static_cast<double>(height);
+
+	return Vec2(sx, sy);
+}
+
 //3D实心渲染
 void drawModelDepth(Image& image, DepthBuffer& depth, const Model& model) {
 	
@@ -343,13 +360,81 @@ void drawModelDepth(Image& image, DepthBuffer& depth, const Model& model) {
 			// ===== 三种着色，留一行、注释掉其余两行 =====
 			//v[i].color = normalColor(n);
 			 v[i].color = depthColor(v[i].depth, minDist, depthSpan);
-			// v[i].color = solidColor();
+			// v[i].color = scaleColor();
 		}
 
 		drawTriangleDepth(image, depth, v[0], v[1], v[2]);
 	}
 	std::cout << "正面三角形 = " << frontFaces
 		<< "，被剔除 = " << culledFaces << "（应为 6 / 6）\n";
+}
+
+//MVP矩阵：MVP=Model(模型矩阵)*View(视图矩阵)*Projection(投影矩阵)
+void drawModelPerspective(Image& image, DepthBuffer& depth, const Model& model) {
+	if (model.vertices.empty() || model.faces.empty()) {
+		return;
+	}
+	const double modelAngle = 20.0 * kPi / 180.0;
+
+	//构建三个矩阵
+
+	//模型矩阵
+	const Mat4 modelMat = Mat4::scaling(1.5, 1.5, 1.5) * Mat4::rotationY(modelAngle);
+
+	//视图矩阵
+	const Mat4 viewMat = Mat4::lookAt(Vec3(3.5, 2.5, 3.5),Vec3(0.0, 0.0, 0.0),Vec3(0.0, 1.0, 0.0));
+
+	//投影矩阵
+	const Mat4 projMat = Mat4::perspective(55.0 * kPi / 180.0, static_cast<double>(image.width()) / image.height(), 0.1, 100.0);
+
+	//预乘MVP
+	const Mat4 mvp = projMat * viewMat * modelMat;
+
+	//光照用的方向（固定一盏头灯）
+	const Vec3 lightDir = Vec3(0.35, 0.45, 0.82).normalized();
+	const Color baseColor(230, 205, 170);
+
+	//遍历所有面
+	for (const Face& face : model.faces) {
+		const int idx[3] = { face.a,face.b,face.c };
+
+		const Mat3 rotOnly = Mat3::rotationY(modelAngle);
+
+		const Vec3 a3 = transformVector(rotOnly, model.vertices[idx[0]]);
+		const Vec3 b3 = transformVector(rotOnly, model.vertices[idx[1]]);
+		const Vec3 c3 = transformVector(rotOnly, model.vertices[idx[2]]);
+		const Vec3 n = (b3 - a3).cross(c3 - a3).normalized();//叉乘计算出法线n
+
+		const double diffuse = std::max(0.0, n.dot(lightDir));//dot算出光照入射角余弦值，如果背对光源，点乘结果为负，直接截断为 0（全黑），因为光透不过去。
+		const double brightness = 0.35 + 0.65 * diffuse;
+
+		//预处理三角形的三个顶点
+		ScreenVertex v[3];//用v存放投影后的屏幕顶点
+		bool visible = true;//标记整个三角形是否可见
+
+		for (int i = 0; i < 3; ++i) {
+			const Vec4 clip = transform(mvp, Vec4(model.vertices[idx[i]].x,
+				model.vertices[idx[i]].y,
+				model.vertices[idx[i]].z,
+				1.0));//得到裁剪空间（Clip Space）的坐标 clip。
+			if (clip.w <= 0.0) {
+				visible = false;      // 顶点跑到相机后面去了，整个三角形跳过
+				break;
+			}
+
+			const Vec3 ndc = toCartesian(clip);
+			const Vec2 screen = toViewport(ndc, image.width(), image.height());
+
+			v[i].pos = screen;
+			v[i].depth = -1.0 / clip.w;
+			v[i].color = scaleColor(baseColor, brightness);
+			
+		}
+		if (visible) {
+			drawTriangleDepth(image, depth, v[0], v[1], v[2]);
+		}
+	}
+
 }
 int main() {
 	//测试Vec2.h，可删除
@@ -479,7 +564,8 @@ auto 让编译器自己推断这个变量是什么类型
 	DepthBuffer depth;
 	depth.resize(width, height);
 
-	drawModelDepth(image, depth, model);
+	//drawModelDepth(image, depth, model);
+	drawModelPerspective(image, depth, model);
 	//1.4 把整块画布打印出来
 	/*数字打印用于验证
 	for (int y = 0; y < height; ++y) {

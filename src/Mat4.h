@@ -12,6 +12,7 @@ struct Mat4{
 
 	static Mat4 identity();//单位矩阵
 	static Mat4 translation(double tx, double ty, double tz);//平移
+	static Mat4 scaling(double sx, double sy, double sz);
 
 	//旋转
 	static Mat4 rotationX(double radians);
@@ -20,6 +21,9 @@ struct Mat4{
 
 	//相机核心
 	static Mat4 lookAt(const Vec3& eye, const Vec3& target, const Vec3& up);
+
+	//透视投影
+	static Mat4 perspective(double fovYRadians, double aspect, double nearZ, double farZ);
 
 };
 

@@ -20,6 +20,16 @@ Mat4 Mat4::translation(double tx, double ty, double tz) {
     return result;
 }
 
+Mat4 Mat4::scaling(double sx, double sy, double sz) {
+    Mat4 result = identity();
+
+    result.m[0][0] = sx;
+    result.m[1][1] = sy;
+    result.m[2][2] = sz;
+
+    return result;
+}
+
 //旋转
 Mat4 Mat4::rotationX(double radians) {
     const double c = std::cos(radians);
@@ -116,4 +126,33 @@ Vec4 transform(const Mat4& mat, const Vec4& v) {
         mat.m[1][0] * v.x + mat.m[1][1] * v.y + mat.m[1][2] * v.z + mat.m[1][3] * v.w,
         mat.m[2][0] * v.x + mat.m[2][1] * v.y + mat.m[2][2] * v.z + mat.m[2][3] * v.w,
         mat.m[3][0] * v.x + mat.m[3][1] * v.y + mat.m[3][2] * v.z + mat.m[3][3] * v.w);
+}
+
+Mat4 Mat4::perspective(double fovYRadians, double aspect, double nearZ, double farZ) {
+    //fovYRadians：视场角（Field of View）度数越大，看到的越广
+        //aspect：宽高比（宽度 / 高度）
+        //nearZ / farZ：近裁剪面 / 远裁剪面。离相机太近（小于 nearZ）或太远（大于 farZ）的东西都不渲染，节省算力。
+
+    const double f = 1.0 / std::tan(0.5 * fovYRadians);
+
+    Mat4 result;
+
+    //矩阵样子
+    /*
+    [ f/aspect   0            0                          0          ]
+    [    0       f            0                          0          ]
+    [    0       0   (far+near)/(near-far)  (2*far*near)/(near-far) ]
+    [    0       0           -1                          0          ]*/
+
+    //透视秘密在-1上
+    //看矩阵的最后一行：[0, 0, -1, 0]。
+    // 当你用一个点(x, y, z, 1) 乘这个矩阵时，算出来的第四个分量 w 会变成：
+    //w = 0*x + 0*y + (-1)*z + 0*1 = -z，直接等于相机到该点的距离
+    result.m[0][0] = f / aspect;
+    result.m[1][1] = f;
+    result.m[2][2] = (farZ + nearZ) / (nearZ - farZ);
+    result.m[2][3] = (2.0 * farZ * nearZ) / (nearZ - farZ);
+    result.m[3][2] = -1.0;
+
+    return result;
 }
