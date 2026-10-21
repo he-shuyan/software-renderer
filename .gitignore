@@ -11,3 +11,4 @@ build/
 out.bmp
 *.bmp
 
+!assets/*.bmp

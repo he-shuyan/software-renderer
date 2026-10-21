@@ -13,7 +13,7 @@
 class Image {
 public:
 	Image(int width, int height);//无返回值的构造函数
-
+	Image() = default;
 	int width()const { return width_; };
 	int height()const { return height_; };
 
@@ -21,9 +21,11 @@ public:
 	int getPixel(int x, int y, int chamel)const;
 
 	bool saveBMP(const std::string& path)const;
+
+	bool loadBMP(const std::string& path, Image& out);
 private:
 	std::size_t indexof(int x, int y, int chamel)const;//把 (x, y, channel) 转成 data_ 的下标
-	int width_;
-	int height_;
+	int width_ = 0;
+	int height_ = 0;
 	std::vector<std::uint8_t> data_;
 };

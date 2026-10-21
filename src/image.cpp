@@ -134,3 +134,70 @@ bool Image::saveBMP(const std::string& path)const {
 	out.close();//关闭文件
 	return out.good();//如果流状态正常（没有错误），返回 true。
 }
+
+//这两个函数就是用来把 4 个字节或 2 个字节重新拼成一个整数。
+
+//把四个字节分别左移 0, 8, 16, 24 位拼成 32 位整数。
+static int readInt32(const unsigned char* p) {
+	return p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
+}
+
+//p[0] 是低位，p[1] 左移 8 位变成高位，做按位或（|）拼起来。
+static int readInt16(const unsigned char* p) {
+	return p[0] | (p[1] << 8);
+}
+
+//文件操作
+bool Image::loadBMP(const std::string& path, Image& out) {
+
+	//以二进制模式打开文件
+	std::ifstream in(path, std::ios::binary);
+	if (!in) {
+		return false;
+	}
+
+	//读取文件头
+	unsigned char header[54] = {};//声明一个 54 字节的字节数组，用来存放 BMP 文件头信息
+	in.read(reinterpret_cast<char*>(header), 54);
+
+	//判断合法BMP文件
+	if (header[0] != 'B' || header[1] != 'M') {
+		return false;
+	}
+
+	//从刚读进来的 54 字节文件头里，把四个关键字段取出来。
+	const int width = readInt32(header + 18);//读取图像宽
+	const int height = readInt32(header + 22);//读取图像高
+	const int bitCount = readInt16(header + 28);//每像素位数
+	const int dataOffset = readInt32(header + 10);//素数据开始的文件偏移量
+
+
+	if (width <= 0 || height <= 0 || bitCount != 24) {
+		return false;
+	}
+
+	//BMP 规定，每一行像素数据的字节数，必须是 4 的倍数
+	const int rowBytes = width * 3;//每一行像素字节数
+	const int padding = (4 - (rowBytes % 4)) % 4;//补齐字节数
+
+	in.seekg(dataOffset, std::ios::beg);//seekg 把文件读取指针直接跳到像素数据开始的地方beg:begin
+	out = Image(width, height);
+
+	//读取像素，处理上下翻转与BGR转换
+	for (int fileRow = 0; fileRow < height; ++fileRow) {
+
+		//BMP 文件是从下到上存储像素的，但是Image类约定y=0是顶部（y轴正方向朝下）
+		//所以用 height - 1 - fileRow 把行号倒过来。
+		const int y = height - 1 - fileRow;
+
+		for (int x = 0; x < width; ++x) {
+			//BMP 的第三个大坑：每个像素在文件里的排列顺序是 B（蓝）、G（绿）、R（红）
+			//但是Image却是R，G，B
+			unsigned char bgr[3] = {};
+			in.read(reinterpret_cast<char*>(bgr), 3);
+			out.setPixel(x, y, bgr[2], bgr[1], bgr[0]);
+		}
+		in.seekg(padding, std::ios::cur);//cur=current当前基准
+	}
+	return true;
+}

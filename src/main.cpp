@@ -440,7 +440,37 @@ void drawModelPerspective(Image& image, DepthBuffer& depth, const Model& model) 
 	}
 
 }
+
+//生成棋盘格纹理
+static void generateCheckerTexture(const char* path, int size) {
+
+	Image img(size, size);//生成一张正方形
+	const int cell = size / 8;//切成8乘8的格子
+
+	for (int y = 0; y < size; ++y) {
+		for (int x = 0; x < size; ++x) {
+			//x/cell算出像素所在格子的列号（0-7），y/cell算行号
+			const bool dark = ((x / cell) + (y / cell)) % 2 == 0;//如果除以 2 的余数是 0，就是深色格；余数是 1，就是浅色格
+
+			//渐变色生成
+			const auto u = static_cast<std::uint8_t>(255 * x / (size - 1));//随着x和y增大，颜色越来越明显
+			const auto v = static_cast<std::uint8_t>(255 * y / (size - 1));
+
+			//填色
+			if (dark) {
+				img.setPixel(x, y, u, 60, 60);// 深格：红色随 x 增强
+			}
+			else {
+				img.setPixel(x, y, 240, v, 240);       // 浅格：绿色随 y 增强
+			}
+		}
+
+	}
+	img.saveBMP(path);
+}
 int main() {
+	generateCheckerTexture("assets/checker.bmp", 256);
+
 	//测试Vec2.h，可删除
 /*
 	const Vec2 a(3.0, 4.0);

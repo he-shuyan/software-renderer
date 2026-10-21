@@ -420,6 +420,55 @@ void testPerspective() {
 		<< "，NDC = (" << nb.x << ", " << nb.y << ")"
 		<< "   x、y 也应是 (1, 1)\n";
 }
+
+void testBmpRoundTrip() {
+	// 特意选一个"每行字节数不是 4 的倍数"的尺寸：
+	// 65 * 3 = 195，需要补 1 个字节，这样能顺带验证 padding 的读取
+	const int w = 65;
+	const int h = 33;
+
+	Image original(w, h);
+
+	for (int y = 0; y < h; ++y) {
+		for (int x = 0; x < w; ++x) {
+			original.setPixel(x, y,
+				static_cast<std::uint8_t>(x * 3),
+				static_cast<std::uint8_t>(y * 7),
+				static_cast<std::uint8_t>((x + y) * 2));
+		}
+	}
+
+	if (!original.saveBMP("out_rt_src.bmp")) {
+		std::cout << "写出失败\n";
+		return;
+	}
+
+	Image loaded;
+
+	if (!original.loadBMP("out_rt_src.bmp", loaded)) {
+		std::cout << "读回失败\n";
+		return;
+	}
+
+	if (loaded.width() != w || loaded.height() != h) {
+		std::cout << "尺寸不一致：" << loaded.width() << " x " << loaded.height() << "\n";
+		return;
+	}
+
+	int diff = 0;
+
+	for (int y = 0; y < h; ++y) {
+		for (int x = 0; x < w; ++x) {
+			for (int c = 0; c < 3; ++c) {
+				if (original.getPixel(x, y, c) != loaded.getPixel(x, y, c)) {
+					++diff;
+				}
+			}
+		}
+	}
+
+	std::cout << "往返后像素不一致数 = " << diff << "（应为 0）\n";
+}
 int main() {
 	std::cout << "=== 画线算法验证 ===\n";
 	dumpSmallLine();
@@ -468,5 +517,8 @@ int main() {
 
 	std::cout << "\n=== 透视投影检测 ===\n";
 	testPerspective();
+
+	std::cout << "\n=== 贴图检测 ===\n";
+	testBmpRoundTrip();
 	return 0;
 }
