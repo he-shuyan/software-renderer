@@ -432,6 +432,7 @@ void drawModelPerspective(Image& image, DepthBuffer& depth, const Model& model,c
 			const Vec2 screen = toViewport(ndc, image.width(), image.height());
 
 			v[i].pos = screen;
+			v[i].invW = usePerspective ? (1.0 / clip.w) : 1.0;
 			v[i].depth = usePerspective ? -1.0 / clip.w : ndc.z;
 			//v[i].color = scaleColor(baseColor, brightness);
 

@@ -11,6 +11,7 @@ struct ScreenVertex {
 	double depth = 0.0;//深度
 	Color color;//颜色
 	Vec2 uv;
+	double invW = 1.0;      // 透视投影下是 1/w；正交投影下恒为 1
 };
 
 double edge(const Vec2& a, const Vec2& b, const Vec2& p);

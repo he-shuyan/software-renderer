@@ -139,9 +139,18 @@ static void rasterizeTriangle(Image& image, DepthBuffer* depth, const Image* tex
 
 			/*
 			const Color c = mix3(v0.color, v1.color, v2.color, w0, w1, w2);
-			image.setPixel(x, y, c.r, c.g, c.b);*/
+			image.setPixel(x, y, c.r, c.g, c.b);
 			const double u = w0 * v0.uv.x + w1 * v1.uv.x + w2 * v2.uv.x;
-			const double v = w0 * v0.uv.y + w1 * v1.uv.y + w2 * v2.uv.y;
+			const double v = w0 * v0.uv.y + w1 * v1.uv.y + w2 * v2.uv.y;*/
+			const double iw = w0 * v0.invW + w1 * v1.invW + w2 * v2.invW;
+
+			const double u = (w0 * v0.uv.x * v0.invW +
+				w1 * v1.uv.x * v1.invW +
+				w2 * v2.uv.x * v2.invW) / iw;
+
+			const double v = (w0 * v0.uv.y * v0.invW +
+				w1 * v1.uv.y * v1.invW +
+				w2 * v2.uv.y * v2.invW) / iw;
 
 			const Color shade = mix3(v0.color, v1.color, v2.color, w0, w1, w2);
 
