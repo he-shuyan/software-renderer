@@ -370,7 +370,7 @@ void drawModelDepth(Image& image, DepthBuffer& depth, const Model& model) {
 }
 
 //MVP矩阵：MVP=Model(模型矩阵)*View(视图矩阵)*Projection(投影矩阵)
-void drawModelPerspective(Image& image, DepthBuffer& depth, const Model& model) {
+void drawModelPerspective(Image& image, DepthBuffer& depth, const Model& model,const Image& texture) {
 	if (model.vertices.empty() || model.faces.empty()) {
 		return;
 	}
@@ -401,6 +401,8 @@ void drawModelPerspective(Image& image, DepthBuffer& depth, const Model& model) 
 	//遍历所有面
 	for (const Face& face : model.faces) {
 		const int idx[3] = { face.a,face.b,face.c };
+		const bool hasUv = (face.ta >= 0 && face.tb >= 0 && face.tc >= 0);
+		const int uvIdx[3] = { face.ta, face.tb, face.tc };
 
 		const Mat3 rotOnly = Mat3::rotationY(modelAngle);
 
@@ -431,11 +433,21 @@ void drawModelPerspective(Image& image, DepthBuffer& depth, const Model& model) 
 
 			v[i].pos = screen;
 			v[i].depth = usePerspective ? -1.0 / clip.w : ndc.z;
-			v[i].color = scaleColor(baseColor, brightness);
+			//v[i].color = scaleColor(baseColor, brightness);
+
+			if (hasUv) {
+				v[i].uv = model.uvs[uvIdx[i]];
+				v[i].color = scaleColor(Color(255, 255, 255), brightness);
+			}
+			else {
+				v[i].color = scaleColor(baseColor, brightness);
+			}
 			
 		}
 		if (visible) {
-			drawTriangleDepth(image, depth, v[0], v[1], v[2]);
+			//drawTriangleDepth(image, depth, v[0], v[1], v[2]);
+			drawTriangleDepth(image, depth, v[0], v[1], v[2],
+				hasUv ? &texture : nullptr);
 		}
 	}
 
@@ -589,17 +601,24 @@ auto 让编译器自己推断这个变量是什么类型
 	//模型加载与渲染
 	Model model;
 
-	if (!loadObj("assets/cube.obj", model)) {
+	if (!loadObj("assets/cube_uv.obj", model)) {
 		std::cout << "模型加载失败\n";
 		return 1;
 	}
 
+	Image texture;
+
+	if (!texture.loadBMP("assets/checker.bmp", texture)) {
+		std::cout << "贴图加载失败\n";
+		return 1;
+	}
 	//drawModelWireframe(image, model);
 	DepthBuffer depth;
 	depth.resize(width, height);
 
 	//drawModelDepth(image, depth, model);
-	drawModelPerspective(image, depth, model);
+	//drawModelPerspective(image, depth, model);
+	drawModelPerspective(image, depth, model, texture);
 	//1.4 把整块画布打印出来
 	/*数字打印用于验证
 	for (int y = 0; y < height; ++y) {
