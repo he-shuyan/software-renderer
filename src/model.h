@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "Vec3.h"
+#include "Vec2.h"
 
 //三角形面
 struct Face{
@@ -12,6 +13,11 @@ struct Face{
 	int a = 0;
 	int b = 0;
 	int c = 0;
+
+	//新增UV索引，默认-1
+	int ta = -1;
+	int tb = -1;
+	int tc = -1;
 };
 
 //整个3D模型
@@ -21,6 +27,7 @@ faces:    12 个 Face（12 个三角形）
 */
 struct Model{
 	std::vector<Vec3>vertices;//所有顶点
+	std::vector<Vec2>uvs;// 新增：UV 数组（用 Vec2 存）
 	std::vector<Face> faces;//所有三角形面
 
 };

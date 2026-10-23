@@ -469,6 +469,46 @@ void testBmpRoundTrip() {
 
 	std::cout << "往返后像素不一致数 = " << diff << "（应为 0）\n";
 }
+
+void testObjUv() {
+	Model model;
+
+	if (!loadObj("assets/cube_uv.obj", model)) {
+		std::cout << "加载 cube_uv.obj 失败\n";
+		return;
+	}
+
+	std::cout << "cube_uv.obj: 顶点 " << model.vertices.size()
+		<< "，UV " << model.uvs.size()
+		<< "，面 " << model.faces.size()
+		<< "（应为 8 / 24 / 12）\n";
+
+	const Face& f0 = model.faces[0];
+	std::cout << "第 0 个面的位置索引 = " << f0.a << "," << f0.b << "," << f0.c
+		<< "（应为 4,5,6）\n";
+	std::cout << "第 0 个面的 UV 索引   = " << f0.ta << "," << f0.tb << "," << f0.tc
+		<< "（应为 0,1,2）\n";
+
+	bool ok = true;
+	const int uvCount = static_cast<int>(model.uvs.size());
+
+	for (const Face& f : model.faces) {
+		if (f.ta < 0 || f.ta >= uvCount ||
+			f.tb < 0 || f.tb >= uvCount ||
+			f.tc < 0 || f.tc >= uvCount) {
+			ok = false;
+		}
+	}
+
+	std::cout << "UV 索引范围检查 = " << (ok ? "通过" : "失败") << "\n";
+
+	Model plain;
+	loadObj("assets/cube.obj", plain);
+
+	std::cout << "cube.obj（无 UV）: UV 数 " << plain.uvs.size()
+		<< "，第 0 个面的 ta = " << plain.faces[0].ta
+		<< "（应为 0 和 -1）\n";
+}
 int main() {
 	std::cout << "=== 画线算法验证 ===\n";
 	dumpSmallLine();
@@ -520,5 +560,8 @@ int main() {
 
 	std::cout << "\n=== 贴图检测 ===\n";
 	testBmpRoundTrip();
+
+	std::cout << "\n=== UV检验 ===\n";
+	testObjUv();
 	return 0;
 }

@@ -33,42 +33,76 @@ bool loadObj(const std::string& path, Model& model) {//path:文件路径，例�
 			iss >> x >> y >> z;
 			model.vertices.push_back(Vec3(x, y, z));
 		}
+		//读取 OBJ 文件里以 vt 开头的行，提取出 u 和 v，存入 model.uvs 数组中。非常简单直接。
+		else if (tag == "vt") {
+			double u = 0.0;
+			double v = 0.0;
+
+			iss >> u >> v;
+
+			model.uvs.push_back(Vec2(u, v));
+		}
 		/*f 1 2 3                # 只给顶点索引
           f 1/1 2/2 3/3          # 顶点索引/纹理索引
           f 1//1 2//2 3//3       # 顶点索引//法线索引
           f 1/1/1 2/2/2 3/3/3    # 顶点索引/纹理索引/法线索引*/
 		else if (tag == "f") {//当tag==f,找第一个/,取/之前为顶点索引
-			std::vector<int>indices;
+			
+			//std::vector<int>indices;
 			std::string token;
+
+			std::vector<int>posIndices;
+			std::vector<int>uvIndices;
 				
 			while (iss>>token){
 				//找到就返回/第一次出现的下标索引，没有就返回npos
-				const std::size_t slash = token.find('/');
+				const std::size_t s1 = token.find('/');
 
 
 				//判断是否找到，找到就取/之前部分，否则就取全部
-				const std::string first = (slash == std::string::npos) ? token : token.substr(0, slash);
+				const std::string posPart = (s1== std::string::npos) ? token : token.substr(0, s1);
 
 				//- 1 是因为 OBJ 文件的索引从 1 开始，而 C++ 数组从 0 开始
-				indices.push_back(std::stoi(first) - 1);// 必须用std::stoi 把字符串转成整数即'1'->1
+				//indices.push_back(std::stoi(first) - 1);// 必须用std::stoi 把字符串转成整数即'1'->1
+				int uvIdx = -1;
 
+				//如果找到第一个/
+				if (s1 != std::string::npos) {
 
+					const std::size_t s2 = token.find('/', s1 + 1);//从s1+1继续找，找到第二个/位置
+					const std::string uvPart = (s2 == std::string::npos)
+						? token.substr(s1 + 1)//没找到第二个，uvPart取后边全部
+						: token.substr(s1 + 1, s2 - s1 - 1);//找到，取第一个/和第二个/之间
+
+					//防止1//3写法出现导致stoi报错
+					if (!uvPart.empty()) {
+						uvIdx = std::stoi(uvPart) - 1;//stoi将string转化为int
+					}
+
+				}
+
+				posIndices.push_back(std::stoi(posPart) - 1);
+				uvIndices.push_back(uvIdx);
 			}
 
 			//多边形三角化：以第0个顶点为中心做扇形拆分
-			for (std::size_t i = 1; i + 1 < indices.size(); ++i) {
-				model.faces.push_back(Face{ indices[0], indices[i], indices[i + 1] });
+			for (std::size_t i = 1; i + 1 < posIndices.size(); ++i) {
+				model.faces.push_back(Face{posIndices[0], posIndices[i], posIndices[i + 1],uvIndices[0],  uvIndices[i],  uvIndices[i + 1],});
 			}
 		}
 	}
 
 	// 校验：每个面的三个索引都必须落在顶点范围内
 	const int vertexCount = static_cast<int>(model.vertices.size());
-
+	const int uvCount = static_cast<int>(model.uvs.size());
 	for (const Face& face : model.faces) {
 		if (face.a < 0 || face.a >= vertexCount ||
 			face.b < 0 || face.b >= vertexCount ||
 			face.c < 0 || face.c >= vertexCount) {
+			return false;
+		}
+
+		if (face.ta >= uvCount || face.tb >= uvCount || face.tc >= uvCount) {
 			return false;
 		}
 	}
