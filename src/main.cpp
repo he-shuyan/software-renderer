@@ -478,7 +478,6 @@ static void generateCheckerTexture(const char* path, int size) {
 			}
 		}
 
-	}
 	img.saveBMP(path);
 }
 int main() {
